@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Computer Vision 1 post read</title>
+<meta name="description" content="Computer Vision 1 post read: from pixels to convolutions, and why CNNs beat vanilla neural networks on images.">
+<style>
+:root{
+  --v950:#1e0b4b;--v900:#2e1065;--v800:#4c1d95;--v700:#6d28d9;--v600:#7c3aed;--v500:#8b5cf6;
+  --v400:#a78bfa;--v300:#c4b5fd;--v200:#ddd6fe;--v100:#ede9fe;--v50:#f5f3ff;
+  --ink:#1f1637;--muted:#5a4f78;--line:#e4dcfa;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth;scroll-padding-top:84px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
+body{margin:0;background:#fff;color:var(--ink);font:17px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:Georgia,"Iowan Old Style","Times New Roman",serif;line-height:1.2;color:var(--v900);margin:0}
+h2{font-size:clamp(1.7rem,3.4vw,2.3rem);margin:0 0 .7rem}
+h3{font-size:1.35rem;margin:2.2rem 0 .5rem}
+h4{font-size:1.02rem;margin:1.2rem 0 .3rem;color:var(--v800)}
+p{margin:.75rem 0}
+p,ul,ol{max-width:70ch}
+li{margin:.3rem 0}
+a{color:var(--v700)}
+code{font:.88em ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--v100);color:var(--v800);padding:.1em .35em;border-radius:5px}
+:focus-visible{outline:3px solid var(--v500);outline-offset:2px;border-radius:4px}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.skip{position:absolute;left:-999px;top:8px;background:var(--v900);color:#fff;padding:.5rem 1rem;z-index:100;border-radius:8px}
+.skip:focus{left:8px}
+
+/* header */
+.top{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.top .in{max-width:1040px;margin:0 auto;padding:.6rem 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{font:700 1.05rem Georgia,serif;color:var(--v900);text-decoration:none;display:flex;align-items:center;gap:10px}
+.brand i{width:18px;height:18px;border-radius:4px;background:conic-gradient(var(--v700) 25%,var(--v300) 0 50%,var(--v500) 0 75%,var(--v900) 0);display:inline-block}
+#bar{height:3px;background:var(--v600);width:0;transition:width .1s}
+.btn{font:600 .9rem system-ui,sans-serif;background:var(--v700);color:#fff;border:2px solid var(--v700);border-radius:10px;padding:7px 14px;cursor:pointer}
+.btn:hover{background:var(--v800);border-color:var(--v800)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:#fff;color:var(--v700)}
+.btn.ghost:hover{background:var(--v50)}
+.btn.sm{padding:4px 10px;font-size:.82rem}
+#toc{position:absolute;right:max(20px,calc(50% - 520px));top:100%;width:min(360px,calc(100vw - 40px));max-height:70vh;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 40px -12px rgba(46,16,101,.35);padding:10px}
+#toc ol{list-style:none;margin:0;padding:0;max-width:none}
+#toc a{display:flex;gap:10px;padding:7px 10px;border-radius:8px;text-decoration:none;color:var(--ink);font-size:.95rem;line-height:1.35}
+#toc a b{color:var(--v600);font-variant-numeric:tabular-nums;min-width:1.6em}
+#toc a:hover,#toc a[aria-current=true]{background:var(--v100);color:var(--v900)}
+#toc a[aria-current=true]{font-weight:700}
+
+/* hero */
+.hero{color:#fff;padding:84px 20px 92px;background-color:var(--v900);
+  background-image:linear-gradient(rgba(255,255,255,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.07) 1px,transparent 1px),linear-gradient(135deg,var(--v950),var(--v700));
+  background-size:30px 30px,30px 30px,100% 100%}
+.hero .in{max-width:900px;margin:0 auto}
+.eyebrow{font:700 .78rem system-ui;letter-spacing:.14em;text-transform:uppercase;color:var(--v200)}
+.hero h1{color:#fff;font-size:clamp(2.3rem,6.5vw,4rem);margin:.4rem 0 1rem}
+.hero p{font-size:1.2rem;color:var(--v100);max-width:56ch}
+.hero .cta{margin-top:1.6rem;display:flex;gap:12px;flex-wrap:wrap}
+.hero .btn{background:#fff;color:var(--v800);border-color:#fff}
+.hero .btn.ghost{background:transparent;color:#fff;border-color:var(--v300)}
+
+/* sections */
+main section{padding:60px 20px;border-bottom:1px solid var(--line)}
+main section:nth-of-type(even){background:var(--v50)}
+main section>.in{max-width:940px;margin:0 auto}
+.kicker{display:inline-block;font:700 .78rem system-ui;letter-spacing:.14em;text-transform:uppercase;color:var(--v600);margin-bottom:.35rem}
+.callout{border-left:5px solid var(--v600);background:var(--v100);padding:12px 18px;border-radius:0 14px 14px 0;margin:1.2rem 0;max-width:70ch}
+.callout p{margin:.3rem 0}
+.note{font-size:.88rem;color:var(--muted)}
+.formula{font:italic 1.2rem Georgia,serif;text-align:center;background:var(--v900);color:#fff;border-radius:14px;padding:14px 18px;margin:16px 0;overflow-x:auto;max-width:none}
+.formula small{display:block;font:.8rem system-ui;color:var(--v200);font-style:normal;margin-top:4px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin:16px 0}
+.card{border:1px solid var(--line);border-radius:14px;padding:16px 18px;background:#fff}
+.card h4{margin:0 0 .3rem;font-size:1.05rem;color:var(--v900)}
+.card p{margin:.3rem 0;font-size:.97rem}
+.card.dark{background:var(--v900);color:#fff;border-color:var(--v900)}
+.card.dark h4{color:#fff}
+.tag{display:inline-block;font:700 .72rem system-ui;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:var(--v100);color:var(--v800)}
+
+/* widgets */
+.widget{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;margin:24px 0;box-shadow:0 8px 26px -14px rgba(76,29,149,.35)}
+.wtag{display:inline-block;font:700 .7rem system-ui;letter-spacing:.1em;text-transform:uppercase;color:var(--v700);background:var(--v100);padding:5px 10px;border-radius:999px;margin-bottom:8px}
+.wtitle{font:700 1.12rem/1.3 Georgia,serif;color:var(--v900);margin:0 0 4px}
+.wdesc{color:var(--muted);font-size:.93rem;margin:0 0 12px;max-width:none}
+.ctrl{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin:8px 0 14px}
+.seg{display:inline-flex;flex-wrap:wrap}
+.seg button{font:600 .85rem system-ui,sans-serif;border:1.5px solid var(--v300);background:#fff;color:var(--v800);padding:6px 12px;cursor:pointer;margin-left:-1.5px}
+.seg button:first-child{border-radius:10px 0 0 10px;margin-left:0}
+.seg button:last-child{border-radius:0 10px 10px 0}
+.seg button:only-child{border-radius:10px}
+.seg button:hover{background:var(--v50)}
+.seg button[aria-pressed=true]{background:var(--v700);border-color:var(--v700);color:#fff;position:relative;z-index:1}
+select,input[type=number]{font:inherit;font-size:.9rem;padding:6px 8px;border:1.5px solid var(--v300);border-radius:8px;background:#fff;color:var(--v900)}
+input[type=number]{width:92px}
+input[type=range]{accent-color:var(--v600)}
+label.sel,label.chk,label.fld{font-size:.88rem;color:var(--muted);display:flex;align-items:center;gap:6px}
+label.fld{flex-direction:column;align-items:flex-start;gap:3px;font-weight:600}
+.mat{display:grid;gap:3px;grid-template-columns:repeat(var(--c),minmax(0,1fr))}
+.cell{aspect-ratio:1;display:flex;align-items:center;justify-content:center;text-align:center;font:600 clamp(.6rem,1.7vw,.88rem)/1.1 ui-monospace,Menlo,monospace;border-radius:6px;background:var(--v50);color:var(--v900);border:1.5px solid var(--v200);padding:0;margin:0}
+button.cell{cursor:pointer}
+button.cell:hover{border-color:var(--v700)}
+.cell.win{outline:3px solid var(--v900);outline-offset:-2px;z-index:1}
+.cell.pad{background:repeating-linear-gradient(45deg,#fff,#fff 4px,var(--v100) 4px,var(--v100) 8px);color:var(--muted);border-style:dashed}
+.cell.neg{border:2px dashed var(--v900)}
+.cell.cur{outline:3px solid var(--v900);outline-offset:-2px}
+.cell.on{background:var(--v700);color:#fff;border-color:var(--v700)}
+.cell.ghost{border:2px dashed var(--v700)}
+.cell.sel{outline:3px solid var(--v900);outline-offset:-2px}
+.bars{display:grid;gap:6px}
+.brow{display:grid;grid-template-columns:minmax(78px,150px) 1fr 62px;gap:10px;align-items:center;font-size:.9rem}
+.bl{font-weight:600;color:var(--v900)}
+.bt{background:var(--v100);border-radius:6px;height:16px;overflow:hidden;display:block}
+.bf{display:block;height:100%;background:var(--v700);border-radius:6px;transition:width .25s}
+.bv{font-variant-numeric:tabular-nums;text-align:right;color:var(--muted)}
+.readout{margin-top:12px;padding:10px 14px;background:var(--v50);border:1px solid var(--line);border-radius:12px;font-size:.93rem;max-width:none}
+.readout b{color:var(--v900)}
+.fig{margin:14px 0}
+.fig img{max-width:100%;height:auto;border-radius:12px;border:1px solid var(--line);display:block;margin:0 auto}
+.fig figcaption{font-size:.85rem;color:var(--muted);text-align:center;margin-top:6px}
+.fb{display:none;padding:18px;border:2px dashed var(--v300);border-radius:12px;color:var(--muted);font-size:.9rem;text-align:center}
+.fig.broken .fb{display:block}
+.fig.broken img{display:none}
+.duo{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+
+/* tabs */
+.tabs{margin:18px 0}
+.tablist{display:flex;gap:4px;flex-wrap:wrap;border-bottom:2px solid var(--line);margin-bottom:14px}
+.tablist button{font:600 .92rem system-ui,sans-serif;background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);padding:9px 14px;cursor:pointer;margin-bottom:-2px;border-radius:8px 8px 0 0}
+.tablist button:hover{color:var(--v800);background:var(--v50)}
+.tablist button[aria-selected=true]{color:var(--v800);border-bottom-color:var(--v700);background:var(--v100)}
+[role=tabpanel]:focus-visible{outline-offset:6px}
+
+/* code + tables */
+details.code{border:1px solid var(--line);border-radius:12px;margin:14px 0;background:#fff;overflow:hidden}
+details.code summary{cursor:pointer;padding:10px 14px;font:600 .9rem system-ui;color:var(--v800);background:var(--v50)}
+details.code[open] summary{border-bottom:1px solid var(--line)}
+pre{margin:0;padding:14px 16px;overflow:auto;background:var(--v950);color:var(--v100);font:13px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.tw{overflow-x:auto;margin:14px 0}
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+th,td{padding:8px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{background:var(--v100);color:var(--v900);font-weight:700}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+
+/* specific widgets */
+.pxwrap{display:grid;grid-template-columns:minmax(0,420px) 1fr;gap:20px;align-items:start}
+.pxgrid{gap:2px}
+.pxgrid .cell{border-radius:3px;border:0;font-size:clamp(.5rem,1.4vw,.68rem)}
+.vrow{display:flex;align-items:center;gap:8px;margin:5px 0}
+.vl{font-weight:800;color:var(--v800);width:44px;font-size:.82rem}
+.vcells{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:3px;flex:1}
+.vcells .cell{aspect-ratio:auto;height:34px;font-size:clamp(.55rem,1.5vw,.78rem)}
+.flat{display:grid;grid-template-columns:130px 1fr;gap:22px;align-items:start}
+.flat .mat{max-width:130px}
+.srow{display:grid;grid-template-columns:72px minmax(90px,1fr) 42px minmax(90px,1fr) 58px;gap:10px;align-items:center;margin:8px 0;font-size:.9rem}
+.srow input{width:100%}
+.zv{font-variant-numeric:tabular-nums;color:var(--muted);text-align:right}
+.mx{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:18px;align-items:start}
+.layers{list-style:none;margin:0;padding:0;max-width:none;display:grid;gap:6px}
+.lay{width:100%;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,.9fr) minmax(0,1fr);gap:8px;align-items:center;text-align:left;font:inherit;font-size:.86rem;background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:8px 10px;cursor:pointer;color:var(--ink)}
+.lay:hover{border-color:var(--v400)}
+.lay[aria-pressed=true]{border-color:var(--v700);background:var(--v50);box-shadow:inset 4px 0 0 var(--v700)}
+.lay .ln{font-weight:700;color:var(--v900)}
+.lay .ls{color:var(--muted);font-variant-numeric:tabular-nums}
+.lay .lp{font-variant-numeric:tabular-nums;font-weight:600;text-align:right}
+.lay .lb{grid-column:1/-1;height:6px;background:var(--v100);border-radius:4px;overflow:hidden}
+.lay .lb i{display:block;height:100%;background:var(--v600)}
+.ldetail{background:var(--v900);color:#fff;border-radius:14px;padding:16px 18px;position:sticky;top:90px}
+.ldetail h4{color:#fff;margin:0 0 6px}
+.ldetail p{margin:.4rem 0;font-size:.92rem;color:var(--v100)}
+.ldetail code{background:rgba(255,255,255,.14);color:#fff}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:.85rem;color:var(--muted);margin:6px 0}
+.legend i{display:inline-block;width:26px;height:0;border-top:3px solid var(--v900);vertical-align:middle;margin-right:6px}
+.plot{touch-action:pan-y;outline-offset:2px}
+.plot svg{width:100%;height:auto;display:block}
+.cx{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,.7fr) minmax(0,.7fr) minmax(0,1fr);gap:16px;align-items:start}
+.pl{font:700 .78rem system-ui;color:var(--v800);margin-bottom:6px;letter-spacing:.02em}
+.sum{margin-top:8px;font-size:.95rem}
+.stepbar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-top:14px}
+.stepbar input[type=range]{flex:1;min-width:140px}
+.cmp{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:14px 0}
+.stat{border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:#fff}
+.stat .k{font:700 .74rem system-ui;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.stat .v{font:700 1.7rem Georgia,serif;color:var(--v900)}
+.stat .s{font-size:.85rem;color:var(--muted)}
+.vs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.vs div{padding:8px 10px;border-radius:10px;background:var(--v50)}
+.vs div.win{background:var(--v900);color:#fff}
+.vs small{display:block;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;opacity:.8}
+.vs b{font:700 1.3rem Georgia,serif}
+.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:16px 0;max-width:none}
+.flow span{background:#fff;border:1.5px solid var(--v300);color:var(--v900);padding:8px 12px;border-radius:10px;font:600 .9rem system-ui}
+.flow i{color:var(--v600);font-style:normal;font-weight:800}
+.cortex{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;align-items:stretch}
+.cortex .rl{font:700 .75rem system-ui;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center}
+.cortex button{font:inherit;border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:10px 8px;cursor:pointer;text-align:center;color:var(--ink);font-size:.84rem}
+.cortex button:hover{border-color:var(--v400)}
+.cortex button[aria-pressed=true]{background:var(--v900);color:#fff;border-color:var(--v900)}
+.cortex svg{width:40px;height:40px;display:block;margin:0 auto 4px}
+.cortex button b{display:block;font-size:.86rem}
+.opt{display:flex;gap:10px;align-items:flex-start;border:1.5px solid var(--line);border-radius:12px;padding:10px 14px;margin:8px 0;cursor:pointer;background:#fff}
+.opt:hover{border-color:var(--v400)}
+.opt input{margin-top:5px;accent-color:var(--v700)}
+.opt.ok{background:var(--v900);color:#fff;border-color:var(--v900)}
+.opt.bad{border:2px dashed var(--v900);background:var(--v50)}
+.opt .mk{margin-left:auto;font-weight:700;font-size:.82rem;white-space:nowrap}
+fieldset{border:0;padding:0;margin:0}
+legend{font-weight:700;color:var(--v900);padding:0;margin-bottom:6px}
+.qa{display:flex;gap:10px;margin-top:10px}
+footer{background:var(--v950);color:var(--v200);text-align:center;padding:36px 20px;font:700 1rem Georgia,serif}
+footer small{display:block;font:.8rem system-ui;opacity:.7;margin-top:4px}
+
+@media (max-width:820px){
+  .pxwrap,.flat,.mx{grid-template-columns:1fr}
+  .cx{grid-template-columns:1fr 1fr}
+  .cx .pn-in{grid-column:1/-1}
+  .ldetail{position:static}
+  .cortex{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .cortex .rl{grid-column:1/-1}
+}
+@media (max-width:640px){
+  body{font-size:16px}
+  main section{padding:44px 16px}
+  .srow{grid-template-columns:72px 1fr 42px}
+  .srow .bt{grid-column:2}
+  .srow .bv{grid-column:3}
+  .brow{grid-template-columns:84px 1fr 54px}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="top">
+  <div class="in">
+    <a class="brand" href="#top"><i aria-hidden="true"></i>Computer Vision 1 post read</a>
+    <button class="btn ghost sm" id="tocBtn" aria-expanded="false" aria-controls="toc">Contents</button>
+  </div>
+  <div id="bar" aria-hidden="true"></div>
+  <nav id="toc" aria-label="Contents" hidden><ol></ol></nav>
+</header>
+
+<div class="hero" id="top">
+  <div class="in">
+    <div class="eyebrow">Deep Learning · Computer Vision</div>
+    <h1>Computer Vision 1 post read</h1>
+    <p>Computer vision lets machines derive meaningful information from images. This read follows one question: why does a plain neural network struggle with images, and what makes a convolutional network the right tool for the job?</p>
+    <div class="cta"><a class="btn" href="#cv">Start reading</a><a class="btn ghost" href="#conv">Jump to convolution</a></div>
+  </div>
+</div>
+
+<main id="main">
+
+<section id="cv" data-title="What is Computer Vision?">
+<div class="in">
+  <span class="kicker">01</span>
+  <h2>What is Computer Vision?</h2>
+  <p>Computer Vision (CV) is a field of AI that enables machines to derive <b>meaningful information from images</b>. Some of the things that means in practice:</p>
+  <div data-tabs="cvtasks"></div>
+  <div class="callout"><p>These problems feel easy to us because humans are trained on many years of image data. Computers start from something very different — so before asking how they cope, look at what they actually receive.</p></div>
+</div>
+</section>
+
+<section id="sees" data-title="What a computer actually sees">
+<div class="in">
+  <span class="kicker">02</span>
+  <h2>What a computer actually sees</h2>
+  <p>A digital image is a matrix of size <b>(H, W, C)</b> made of numbers called <b>pixel values</b>, typically ranging from 0 to 255. H, W and C are the height, width and number of channels. A grayscale image has 1 channel; a colour image has 3. (PyTorch tensors are stored channels-first, as (C, H, W).)</p>
+  <div class="widget" data-w="pixel"></div>
+</div>
+</section>
+
+<section id="hard" data-title="Why computer vision is hard">
+<div class="in">
+  <span class="kicker">03</span>
+  <h2>Why computer vision is hard</h2>
+  <p>Is CV easy? To find out, Google's Vision API was asked what it detects in the image below. The result was <b>bad</b>.</p>
+  <div class="duo" data-tabs-none>
+    <div data-fig="sees-in"></div>
+    <div data-fig="sees-out"></div>
+  </div>
+  <h3>Three classic difficulties</h3>
+  <div data-tabs="challenges"></div>
+  <h3>The scope of CV is enormous</h3>
+  <ul>
+    <li>CV powers industry-leading products such as self-driving cars, automated robots, drones and medical image analysis.</li>
+    <li>It also works alongside other branches of AI such as speech and NLP. In speech recognition, audio chunks are converted into 2D matrices (mel spectrograms) and treated like images.</li>
+    <li>In NLP, CV techniques appear in image captioning and, very recently, image synthesis from prompts.</li>
+  </ul>
+</div>
+</section>
+
+<section id="cortex" data-title="Why deep networks for images?">
+<div class="in">
+  <span class="kicker">04</span>
+  <h2>Why deep neural networks for images?</h2>
+  <p>To see why a deep neural network (DNN) is a sensible choice, look at how the visual cortex works. It is arranged in layers: as information passes from the eyes to deeper parts of the brain, higher and higher order representations are formed. A DNN works in a similar way, so using one to analyse images makes perfect sense.</p>
+  <div class="widget" data-w="cortex"></div>
+  <div data-fig="cortex-img"></div>
+  <div class="callout"><p><b>But what about the architecture?</b> Is a vanilla NN (an MLP) a suitable fit for images? The next parts answer exactly that.</p></div>
+</div>
+</section>
+
+<section id="scenario" data-title="The scenario: a hammer and a screw">
+<div class="in">
+  <span class="kicker">05</span>
+  <h2>The scenario: a hammer and a screw</h2>
+  <p>In earlier lectures we learned about ANNs and where to use them. Now we try fitting a vanilla neural network (the <b>hammer</b>) to a very different kind of data, images (the <b>screw</b>), and see why that does not make sense.</p>
+  <div class="grid3">
+    <div class="card"><h4>The job</h4><p>You are a Data Scientist at Amazon. The goal is an automated system that assigns a clothing product to its master category: <b>10 classes</b>.</p></div>
+    <div class="card"><h4>The first attempt</h4><p>It is a multi-class classification problem on a labelled dataset, and you have just studied ANNs, so you apply one. It gives very poor results.</p></div>
+    <div class="card dark"><h4>The question</h4><p>Why didn't the ANN work, and what else would? The inventory: a vanilla NN (hammer) and a CNN (the new tool).</p></div>
+  </div>
+
+  <h3>The data</h3>
+  <p>The dataset is a collection of real-world clothing images (the open-source <i>clothing-dataset-small</i>). It already comes divided into <code>train</code>, <code>validation</code> and <code>test</code> folders, each with one sub-folder per class, so no split has to be created.</p>
+  <div class="widget" data-w="classes"></div>
+  <ul>
+    <li><b>Every image has a different size.</b> That is normal for real-world data but not ideal: a batch needs all samples to be the same size. Preprocessing handles this next.</li>
+    <li><b>The classes are imbalanced.</b> For this lecture we work with the distribution as given; common techniques for imbalanced data come later.</li>
+  </ul>
+</div>
+</section>
+
+<section id="prep" data-title="Preprocessing">
+<div class="in">
+  <span class="kicker">06</span>
+  <h2>Preprocessing</h2>
+  <p>Three kinds of preprocessing are needed before the data reaches a network. First the data folders are <i>mounted</i> in PyTorch with <code>torchvision.datasets.ImageFolder</code>, which assumes a <code>root/class_name/xxx.png</code> layout, lazily loads the images and infers each label from its folder name. A <code>DataLoader</code> then adds batching, shuffling and parallel loading.</p>
+  <div class="grid3">
+    <div class="card"><span class="tag">Shape</span><h4>Resize</h4><p>A batch needs identical sizes, so every image is resized to a fixed <b>128 × 128</b>.</p></div>
+    <div class="card"><span class="tag">Value</span><h4>Rescale</h4><p><code>transforms.ToTensor()</code> converts <code>uint8</code> to <code>float32</code>, rescales 0–255 to <b>0–1</b>, and reorders (H, W, C) to (C, H, W). Without scaling, images with large pixel values would dominate the loss and the weight updates (think black cat vs white cat).</p></div>
+    <div class="card"><span class="tag">Shape · MLP only</span><h4>Flatten</h4><p>Neural networks need each sample to be 1D. A batch of <code>bs × 3 × 128 × 128</code> becomes <code>bs × 49,152</code>.</p></div>
+  </div>
+  <div class="widget" data-w="flatten"></div>
+  <p>Flatten is kept as a layer <i>inside the model</i> rather than in the preprocessing stack. It is a non-standard preprocessing step, and it is not needed when working with CNNs.</p>
+  <details class="code"><summary>Code: mounting data and the preprocessing pipeline</summary>
+<pre>train_data = datasets.ImageFolder("clothing-dataset-small/train")
+val_data   = datasets.ImageFolder("clothing-dataset-small/validation")
+test_data  = datasets.ImageFolder("clothing-dataset-small/test")
+
+height, width = 128, 128
+data_preprocess = transforms.Compose([
+    transforms.Resize((height, width)),  # shape preprocessing
+    transforms.ToTensor(),               # value preprocessing: rescales to [0, 1]
+])
+train_data.transform = data_preprocess
+val_data.transform   = data_preprocess
+test_data.transform  = data_preprocess
+
+train_ds = DataLoader(train_data, batch_size=32, shuffle=True)
+val_ds   = DataLoader(val_data,   batch_size=32, shuffle=False)
+test_ds  = DataLoader(test_data,  batch_size=32, shuffle=False)</pre></details>
+  <div class="widget" data-w="quiz" data-q="q1"></div>
+</div>
+</section>
+
+<section id="ann" data-title="Training a vanilla neural network">
+<div class="in">
+  <span class="kicker">07</span>
+  <h2>Training a vanilla neural network</h2>
+  <p>We start with the vanilla NN, check its performance on the test set, then switch to a CNN and see how much better it does.</p>
+
+  <h3>Model architecture</h3>
+  <p>A neural network is made of an input layer, a few hidden layers and an output layer. Each neuron trains on a distinct set of features based on the previous layer's output, and the connections between neurons (the weight matrix W) are what let the network recognise patterns. Here: flatten, two hidden dense layers (1,024 and 256 units) with ReLU, and a 10-unit output layer.</p>
+  <div class="widget" data-w="model" data-arg="ann"></div>
+  <details class="code"><summary>Code: ANNModel</summary>
+<pre>class ANNModel(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.flatten = nn.Flatten()
+        self.fc1 = nn.Linear(height * width * 3, 1024)  # hidden layer 1
+        self.fc2 = nn.Linear(1024, 256)                 # hidden layer 2
+        self.fc3 = nn.Linear(256, 10)                   # output layer
+        self.relu = nn.ReLU()
+
+    def forward(self, x):
+        x = self.flatten(x)
+        x = self.relu(self.fc1(x))
+        x = self.relu(self.fc2(x))
+        return self.fc3(x)  # raw logits: CrossEntropyLoss applies log-softmax internally</pre></details>
+
+  <h3>Loss function and optimizer</h3>
+  <h4>Cross-entropy for multi-class classification</h4>
+  <p>Suppose a 4-class task: is the object a dog, cat, horse or cheetah? The network outputs one raw score (logit) per class. <b>Softmax converts logits into probabilities</b>, and <b>cross-entropy measures the distance</b> between those probabilities and the true label.</p>
+  <div class="widget" data-w="softmax"></div>
+  <p class="note">In PyTorch, <code>nn.CrossEntropyLoss</code> expects integer class labels (not one-hot) and combines <code>LogSoftmax</code> + <code>NLLLoss</code> internally. The model's last layer must therefore output raw logits, not softmax probabilities.</p>
+  <h4>Adam as the optimizer</h4>
+  <ul>
+    <li>It combines the momentum idea with Root Mean Square Propagation (RMSProp), using adaptive per-parameter learning rates to converge quickly.</li>
+    <li>It is computationally efficient and needs little memory.</li>
+    <li>Like every gradient-based optimizer on a non-convex loss, it finds a good (local) minimum, <b>not a guaranteed global minimum</b>.</li>
+  </ul>
+  <details class="code"><summary>Code: loss function and optimizer</summary>
+<pre>criterion = nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(model.parameters())</pre></details>
+
+  <h3>Training and evaluation</h3>
+  <p>Training for 10 epochs, the vanilla NN reaches about 56.5% training accuracy and 48.7% validation accuracy. Explore the curves below. On the test set it scores <b>42.74%</b>.</p>
+  <div class="widget" data-w="curves" data-arg="ann"></div>
+</div>
+</section>
+
+<section id="cnn" data-title="Swapping in a CNN">
+<div class="in">
+  <span class="kicker">08</span>
+  <h2>Swapping in a CNN</h2>
+  <p>Hammering image data did not give good results, so let's reach for the right tool. We replace the first 1,024-unit dense layer with a simple <b>convolution block</b> and keep a dense hidden layer and output layer after it. A typical convolution block is an <code>nn.Conv2d</code> layer, an activation (ReLU) and an <code>nn.MaxPool2d</code> layer. (Each piece is explained in detail in the sections that follow.)</p>
+  <div class="widget" data-w="model" data-arg="cnn"></div>
+  <details class="code"><summary>Code: CNNModel</summary>
+<pre>class CNNModel(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.conv1 = nn.Conv2d(in_channels=3, out_channels=16, kernel_size=3, stride=1, padding=1)
+        self.relu = nn.ReLU()
+        self.pool = nn.MaxPool2d(kernel_size=2)
+        self.flatten = nn.Flatten()
+        flattened_size = 16 * (height // 2) * (width // 2)
+        self.fc1 = nn.Linear(flattened_size, 256)
+        self.fc2 = nn.Linear(256, 10)
+
+    def forward(self, x):
+        x = self.relu(self.conv1(x))   # (bs, 16, 128, 128)
+        x = self.pool(x)               # (bs, 16, 64, 64)
+        x = self.flatten(x)
+        x = self.relu(self.fc1(x))
+        return self.fc2(x)             # raw logits</pre></details>
+  <p>The same cross-entropy loss and Adam optimizer are used, and the model is trained for the same 10 epochs.</p>
+  <div class="widget" data-w="curves" data-arg="cnn"></div>
+</div>
+</section>
+
+<section id="compare" data-title="Head to head">
+<div class="in">
+  <span class="kicker">09</span>
+  <h2>Head to head: hammer vs screwdriver</h2>
+  <p>With the same data, loss, optimizer and epochs, swapping a single dense layer for one convolution + pooling block gives a clear jump in accuracy. Where we have a screw (image data), a specialist tool (CNN) beats the hammer (vanilla NN).</p>
+  <div class="cmp" data-w="headline"></div>
+  <p class="note">Reference-run note: the lecture text quotes roughly 27% for the vanilla NN, while the evaluation output shown here reports 42.74%. Exact numbers vary from run to run; the CNN's ~51% appears in both.</p>
+
+  <h3>Per-class results for the CNN</h3>
+  <div class="widget" data-w="report"></div>
+
+  <h3>Confusion matrices and sample predictions</h3>
+  <p>The confusion matrix compares true and predicted classes on the test set. In the sample-prediction plots each test image sits beside a bar plot of its predicted class probabilities (the output of softmax over the 10 classes); the bar for the true label is blue and, when the prediction is wrong, the predicted class is red.</p>
+  <div data-tabs="results"></div>
+  <p>Two questions follow, and the rest of this read answers them:</p>
+  <ol>
+    <li><b>Why did the hammer (MLP) fail on image data?</b></li>
+    <li><b>Which special features helped the screwdriver (CNN) succeed?</b></li>
+  </ol>
+</div>
+</section>
+
+<section id="mlp" data-title="Why the MLP fails on images">
+<div class="in">
+  <span class="kicker">10</span>
+  <h2>Why the hammer failed: three problems with MLPs</h2>
+  <div data-tabs="problems"></div>
+  <div class="widget" data-w="quiz" data-q="q2"></div>
+</div>
+</section>
+
+<section id="needs" data-title="What a CNN needs">
+<div class="in">
+  <span class="kicker">11</span>
+  <h2>What the screwdriver needs</h2>
+  <p>From the discussion so far, we need a system that:</p>
+  <ul>
+    <li>is robust to translation (position): convolution gives translation <i>equivariance</i>, and pooling adds local <i>invariance</i>;</li>
+    <li>leverages the spatial correlation between pixels;</li>
+    <li>focuses only on local connectivity.</li>
+  </ul>
+  <p>Taking inspiration from the visual cortex, image data has three essential properties:</p>
+  <div class="grid3">
+    <div class="card"><span class="tag">1</span><h4>Locality</h4><p>Neighbouring pixels in an image are correlated.</p></div>
+    <div class="card"><span class="tag">2</span><h4>Stationarity</h4><p>Similar patterns appear multiple times in an image.</p></div>
+    <div class="card"><span class="tag">3</span><h4>Compositionality</h4><p>Higher-level features are extracted by combining (pooling) lower-level features.</p></div>
+  </div>
+
+  <h3>Can we add these properties to a vanilla NN?</h3>
+  <ul>
+    <li><b>Sparse connections for locality.</b> Local features are highly correlated, far-away ones much less, so drop the far-away connections. This restricts each neuron's receptive field (here from 5 inputs to 3). The receptive field with respect to the initial layers grows as we go deeper.</li>
+    <li><b>Parameter sharing for stationarity.</b> Since patterns repeat across an image, share the same weights at every position.</li>
+  </ul>
+  <div class="widget" data-w="local"></div>
+  <p>Together these two operations greatly reduce the number of parameters while preserving the inductive bias of the input signal. Unlike in an MLP, the parameter count no longer depends on the input image size: only on kernel size, input channels and number of filters.</p>
+  <div class="callout"><p>In 2D, these two ideas give a set of learnable parameters of size <b>k × k</b> called a <b>filter</b> or <b>kernel</b>. The computation those kernels perform is called <b>convolution</b>.</p></div>
+</div>
+</section>
+
+<section id="conv" data-title="Convolution, step by step">
+<div class="in">
+  <span class="kicker">12</span>
+  <h2>Convolution, step by step</h2>
+  <p>In deep learning, an (image) convolution is an element-wise multiplication of two matrices followed by a sum:</p>
+  <ol>
+    <li>Take two matrices of the same dimensions.</li>
+    <li>Multiply them element by element (not a dot product, just plain multiplication).</li>
+    <li>Sum the results.</li>
+  </ol>
+  <p class="note">Technical note: what deep-learning libraries call convolution is strictly cross-correlation: the kernel is not flipped. Since kernels are learned, the difference does not matter in practice.</p>
+
+  <h3>The kernel slides over the image</h3>
+  <p>A kernel is a small matrix that slides across a larger image, left to right and top to bottom. At each position, the neighbourhood of the image under the kernel is convolved with it and the result stored. By looking at neighbouring pixels again and again, a kernel can correlate features in the image: for a car on a road, sliding kernels can pick out the car's edges (its shape) by comparing pixels on the car with pixels on the road.</p>
+  <p>Try it. In the explorer, 10 is a bright pixel and 0 a dark one. The default kernel's top row rewards bright pixels and its bottom row rewards dark ones, so it detects a horizontal boundary. Switch the image or kernel and see what the kernel responds to.</p>
+  <div class="widget" data-w="conv"></div>
+  <ul>
+    <li>The first window covers only bright pixels, so the products cancel and the sum is <b>0</b>: the first output value.</li>
+    <li>The kernel then shifts one column right and repeats. The size of each shift is the <b>stride</b>; a stride of (2, 1) would shift two columns horizontally and one row vertically.</li>
+    <li>After a few positions, the output has picked out the horizontal line separating the bright and dark regions.</li>
+    <li>Because the <i>same</i> kernel slides everywhere, convolution is translation <b>equivariant</b>: wherever the line is, the kernel responds with the same pattern of values, shifted to the matching place in the output. (Making the final prediction <i>invariant</i> to small shifts is mainly pooling's job.)</li>
+  </ul>
+
+  <h3>Detecting vertical edges on a real image</h3>
+  <p>With the right kernel a computer can detect vertical edges. Applying OpenCV's Sobel filter (<code>dx=1, dy=0</code> measures intensity change along x, so it responds to vertical edges) to the grayscale version of the image gives:</p>
+  <div class="duo"><div data-fig="sobel-in"></div><div data-fig="sobel-out"></div></div>
+  <details class="code"><summary>Code: Sobel vertical-edge filter</summary>
+<pre>gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)   # cv2.imread returns BGR order
+# ddepth: 64-bit float output (Sobel output can be negative)
+# dx=1, dy=0: change along x, so it responds to VERTICAL edges
+output = cv2.Sobel(gray, ddepth=cv2.CV_64F, dx=1, dy=0, ksize=3)
+output = cv2.convertScaleAbs(output)           # take |output| and convert to 8-bit</pre></details>
+  <p>Try the explorer with the "Bright left, dark right" image and the vertical-edge kernel; the Sobel kernel's negative response (dashed borders) is why the code takes the absolute value.</p>
+
+  <h3>Stacking filters and handling colour</h3>
+  <ul>
+    <li><b>Several filters at once.</b> Apply a horizontal and a vertical edge detector separately and stack their outputs. The output gains a third dimension equal to the number of filters.</li>
+    <li><b>Colour input.</b> If the input has more than one channel, each kernel has a matching depth (the number of input channels) and the convolution runs over the whole <b>volume</b>. With 2 filters on the lecture's example the output is 4 × 4 × 2.</li>
+    <li><b>Learned, not handcrafted.</b> Many more kernels than horizontal and vertical are possible, and which ones matter depends on the problem and dataset. In deep learning we only specify the kernel size and number of kernels, and gradient descent (backpropagation) learns the values. These learnable kernels form a <b>Conv layer</b>.</li>
+  </ul>
+
+  <h3>How many parameters does a conv layer have?</h3>
+  <p>It depends on the filter size, the number of filters and the number of input channels. It does <b>not</b> depend on the height and width of the input image. For one filter of height m, width n over d input channels there are <code>(m·n·d) + 1</code> parameters (the +1 is the bias), so for k filters:</p>
+  <div class="formula">parameters = ((m × n × d) + 1) × k</div>
+  <p>For our CNN (16 filters of 3 × 3 on a 3-channel input): ((3·3·3) + 1) · 16 = 28 · 16 = <b>448</b>, matching the model summary above. Change the image size below and compare how a dense layer and a conv layer react.</p>
+  <div class="widget" data-w="calc" data-arg="both"></div>
+  <details class="code"><summary>Code: verifying the count, and the equivariance demo</summary>
+<pre>conv = nn.Conv2d(in_channels=3, out_channels=16, kernel_size=3, stride=1, padding=1)
+n_params = sum(p.numel() for p in conv.parameters())
+print(tuple(conv.weight.shape), tuple(conv.bias.shape), n_params)
+# (16, 3, 3, 3) (16,) 448
+
+# Convolution is translation EQUIVARIANT: shift the input, the output shifts the same way
+x = torch.randn(1, 1, 12, 12)
+k = nn.Conv2d(1, 1, kernel_size=3, padding=0, bias=False)
+shift = 2
+y = k(x)
+y_of_shifted = k(torch.roll(x, shifts=shift, dims=3))
+print(torch.allclose(y[..., :-shift-2], y_of_shifted[..., shift:-2], atol=1e-6))
+# True</pre></details>
+
+  <h3>Why kernels are odd-sized</h3>
+  <p>We have always used 3 × 3 rather than 2 × 2 or 4 × 4. With an odd size, the pixels of the previous layer sit symmetrically around the output pixel, and the kernel's centre is a valid integer (x, y) coordinate. Even kernels are not impossible, but they need asymmetric padding to keep the output size.</p>
+  <div class="widget" data-w="odd"></div>
+</div>
+</section>
+
+<section id="size" data-title="Padding, stride and output size">
+<div class="in">
+  <span class="kicker">13</span>
+  <h2>Padding, stride and output size</h2>
+  <p>In the explorer above, a 6 × 6 input gave a 4 × 4 output. The kernel only moves where it fully fits, so the output dimension is <code>o = n − f + 1</code> (n input size, f kernel size): 6 − 3 + 1 = 4. The output shrinks with every convolution, and corner pixels are under-used. The fix is <b>padding</b>: adding pixels (zeros) around the border before convolving.</p>
+  <h3>Padding</h3>
+  <p>Without padding the 3 × 3 kernel would "hang off" the edge when centred on the pixel at (0, 0), so we either start where the kernel fully fits ("valid" convolution, output shrinks) or pad the border with zeros ("same" convolution). Padding is useful because:</p>
+  <ol>
+    <li>it preserves information at the image corners, which would otherwise be under-used;</li>
+    <li>the height and width no longer have to shrink after every convolution.</li>
+  </ol>
+  <p>With padding width p on every side, the output size becomes <code>o = n + 2p − f + 1</code>. The tool below counts how many kernel positions cover each pixel of a 6 × 6 image.</p>
+  <div class="widget" data-w="cover"></div>
+
+  <h3>Stride</h3>
+  <p>Stride sets how far the kernel slides each step. A larger stride shrinks the output faster. Its effects: less memory for the output, smaller spatial dimensions that cut computation in later layers, and skipping largely redundant overlapping positions (though too large a stride can skip useful detail). Set stride 2 in the explorer in section 12 to watch it.</p>
+  <div class="formula">o = ⌊(n + 2p − f) / s⌋ + 1<small>n input size · p padding · f kernel size · s stride</small></div>
+  <details class="code"><summary>Code: checking the formula against PyTorch</summary>
+<pre>n, f = 12, 3
+for p, s in [(0, 1), (1, 1), (0, 2), (1, 2)]:
+    out = nn.Conv2d(1, 1, kernel_size=f, stride=s, padding=p)(torch.zeros(1, 1, n, n))
+    print(p, s, out.shape[-1], math.floor((n + 2*p - f) / s) + 1)
+# p=0,s=1 -> 10   p=1,s=1 -> 12   p=0,s=2 -> 5   p=1,s=2 -> 6</pre></details>
+  <div class="widget" data-w="quiz" data-q="q3"></div>
+
+  <h3>The Conv2d arguments, one by one</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Argument</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><code>in_channels</code></td><td>Number of channels of the input (3 for RGB). PyTorch always requires it explicitly; there is no shape inference from an <code>input_shape</code> argument.</td></tr>
+      <tr><td><code>out_channels</code></td><td>Number of unique filters this layer learns; also the number of output channels.</td></tr>
+      <tr><td><code>kernel_size</code></td><td>Size of the kernel: an integer or a 2-tuple such as (3, 3) or (5, 5).</td></tr>
+      <tr><td><code>stride</code></td><td>Distance the kernel slides, as an integer or a 2-tuple. Default 1.</td></tr>
+      <tr><td><code>padding</code></td><td>An integer (pixels of zero padding per side) or, since PyTorch 1.9, the strings <code>"same"</code> / <code>"valid"</code> (only with stride 1). <code>padding=1</code> with a 3 × 3 kernel and stride 1 keeps the spatial size.</td></tr>
+      <tr><td>activation</td><td>There is no such argument in PyTorch: convolution and activation are separate layers, e.g. <code>nn.Conv2d(...)</code> followed by <code>nn.ReLU()</code>.</td></tr>
+    </tbody>
+  </table></div>
+</div>
+</section>
+
+<section id="pool" data-title="Pooling and flattening">
+<div class="in">
+  <span class="kicker">14</span>
+  <h2>Pooling and flattening</h2>
+  <p>Our CNN also used <code>MaxPool2d</code>, which has no learnable parameters. Pooling reduces the height and width of the feature maps. That reduces computation and the number of parameters in the layers that follow, and makes the representation more robust (locally invariant) to small shifts in the input. Stacking layers supports compositionality: deeper layers see larger regions of the image.</p>
+  <ul>
+    <li><b>Max pooling:</b> slide an (f, f) window with a stride and keep the maximum in each region. Used between conv layers.</li>
+    <li><b>Average pooling:</b> keep the average instead. In modern architectures, (global) average pooling is common just before the fully connected layers.</li>
+  </ul>
+  <div class="widget" data-w="pool"></div>
+  <div class="formula">o = ⌊(n − f) / s + 1⌋<small>n input size · f pooling window · s stride</small></div>
+  <details class="code"><summary>Code: pooling layers in PyTorch</summary>
+<pre>nn.MaxPool2d(kernel_size=2)  # stride defaults to kernel_size
+nn.AvgPool2d(kernel_size=2)
+# kernel_size: window size (int or 2-tuple), a non-learnable "filter" taking max or mean
+# stride: like Conv2d; default None means stride = kernel_size</pre></details>
+
+  <h3>Flattening</h3>
+  <p>After convolution, activation and pooling we have pooled feature maps. Flattening literally turns them into one long column vector, because the data is about to enter an artificial neural network. Multiple pooled feature maps become a single long input vector that the dense layers process further.</p>
+</div>
+</section>
+
+<section id="recap" data-title="Recap">
+<div class="in">
+  <span class="kicker">15</span>
+  <h2>Recap</h2>
+  <p>Here is what our first CNN does, step by step:</p>
+  <div class="flow" aria-label="CNN pipeline"><span>Input image</span><i>→</i><span>Convolution</span><i>→</i><span>Activation</span><i>→</i><span>Pooling</span><i>→</i><span>Flatten</span><i>→</i><span>Dense layer</span><i>→</i><span>Loss function</span></div>
+  <h3>Key takeaways</h3>
+  <div class="grid3">
+    <div class="card"><h4>1 · MLPs are a poor fit</h4><p>Flattening destroys spatial structure and needs a huge number of weights.</p></div>
+    <div class="card"><h4>2 · Convolution is the fix</h4><p>Local connectivity + parameter sharing give far fewer parameters and translation <i>equivariance</i>.</p></div>
+    <div class="card"><h4>3 · Know your formulas</h4><p>Pooling has no learnable parameters; sizes and counts follow the formulas below.</p></div>
+  </div>
+  <div class="grid3">
+    <div class="card dark"><h4>Output size</h4><p><code>⌊(n + 2p − f)/s⌋ + 1</code></p></div>
+    <div class="card dark"><h4>Conv parameters</h4><p><code>((m·n·d) + 1) · k</code></p></div>
+    <div class="card dark"><h4>Pooling parameters</h4><p><code>0</code></p></div>
+  </div>
+  <p>Next up: more CNN components, and how to deal with overfitting in CNNs. (In the CNN above, training accuracy reached 98.5% while validation accuracy was 61.0%.)</p>
+  <h3>Self-check</h3>
+  <div class="widget" data-w="exit"></div>
+</div>
+</section>
+
+</main>
+<footer>Computer Vision 1 post read<small>Interactive learning article</small></footer>
+
+<script>
+(function(){
+'use strict';
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const fmt=n=>Number(n).toLocaleString('en-US');
+let uid=0;
+function h(html){const t=document.createElement('template');t.innerHTML=html.trim();return t.content.firstElementChild;}
+function mix(t){t=Math.max(0,Math.min(1,t));const a=[255,255,255],b=[109,40,217];return 'rgb('+a.map((v,i)=>Math.round(v+(b[i]-v)*t)).join(',')+')';}
+function ink(t){return t>0.5?'#fff':'#2e1065';}
+function shell(root,title,desc){root.classList.add('widget');root.innerHTML='<span class="wtag">Interactive</span><h4 class="wtitle">'+title+'</h4>'+(desc?'<p class="wdesc">'+desc+'</p>':'')+'<div class="wbody"></div>';return $('.wbody',root);}
+function seg(container,options,value,onChange,label){
+  const wrap=h('<div class="seg" role="group" aria-label="'+label+'"></div>');
+  function set(v){value=v;Array.from(wrap.children).forEach((b,i)=>b.setAttribute('aria-pressed',String(options[i].value===v)));}
+  options.forEach(o=>{const b=h('<button type="button" aria-pressed="false">'+o.label+'</button>');b.addEventListener('click',()=>{set(o.value);onChange(o.value);});wrap.appendChild(b);});
+  set(value);container.appendChild(wrap);return {set};
+}
+function barRows(el,rows,max,fv){
+  el.innerHTML=rows.map(r=>'<div class="brow" title="'+(r.title||'')+'"><span class="bl">'+r.label+'</span><span class="bt"><span class="bf" style="width:'+Math.max(0.5,r.value/max*100)+'%"></span></span><span class="bv">'+(fv?fv(r.value):r.value)+'</span></div>').join('');
+}
+
+/* ---------- images ---------- */
+const CF='https://d2beiqkhq929f0.cloudfront.net/public_assets/assets/000/';
+function fig(path,alt,cap,w){
+  return '<figure class="fig"><img src="'+CF+path+'" alt="'+alt+'" loading="lazy"'+(w?' style="max-width:'+w+'px"':'')+' onerror="this.closest(\'.fig\').classList.add(\'broken\')"><div class="fb" role="note">Image not available offline. '+alt+'</div>'+(cap?'<figcaption>'+cap+'</figcaption>':'')+'</figure>';
+}
+const FIGS={
+  'sees-in':fig('249/200/original/Screenshot_2026-10-27_122717.png?1793084250','The image submitted to the Vision API','Input image'),
+  'sees-out':fig('249/202/original/Screenshot_2026-10-27_122819.png?1793084329','Result returned by the Google Vision API','What the Vision API detected: a poor result'),
+  'cortex-img':fig('249/203/original/Screenshot_2026-10-27_123043.png?1793084457','Layered processing in the visual cortex','Layered processing in the visual cortex',560),
+  'sobel-in':fig('249/261/original/Screenshot_2026-10-27_125126.png?1793085701','Input image used for the Sobel example','Input image',420),
+  'sobel-out':fig('249/262/original/Screenshot_2026-10-27_125205.png?1793085740','Output of the Sobel vertical-edge filter','After the Sobel vertical-edge filter',420)
+};
+
+/* ---------- tabs ---------- */
+function mountTabs(root,items){
+  root.classList.add('tabs');
+  const id='t'+(++uid);
+  const list=h('<div class="tablist" role="tablist"></div>');
+  const tabs=[],panels=[];
+  items.forEach((it,i)=>{
+    const b=h('<button type="button" role="tab" id="'+id+'-t'+i+'" aria-controls="'+id+'-p'+i+'">'+it.label+'</button>');
+    const p=h('<div role="tabpanel" id="'+id+'-p'+i+'" aria-labelledby="'+id+'-t'+i+'" tabindex="0"></div>');
+    p.innerHTML=it.html;tabs.push(b);panels.push(p);list.appendChild(b);
+  });
+  root.append(list,...panels);
+  function sel(i,focus){tabs.forEach((b,j)=>{const on=i===j;b.setAttribute('aria-selected',String(on));b.tabIndex=on?0:-1;panels[j].hidden=!on;});if(focus)tabs[i].focus();}
+  tabs.forEach((b,i)=>{
+    b.addEventListener('click',()=>sel(i));
+    b.addEventListener('keydown',e=>{
+      if(e.key==='ArrowRight'){e.preventDefault();sel((i+1)%tabs.length,true);}
+      else if(e.key==='ArrowLeft'){e.preventDefault();sel((i-1+tabs.length)%tabs.length,true);}
+      else if(e.key==='Home'){e.preventDefault();sel(0,true);}
+      else if(e.key==='End'){e.preventDefault();sel(tabs.length-1,true);}
+    });
+  });
+  sel(0);
+}
+const TABS={
+  cvtasks:[
+    {label:'Classification',html:'<p><b>Image classification:</b> assigning a class to an entire image.</p>'+fig('248/767/original/Screenshot_2026-10-23_110517.png?1792733735','Example of image classification','',520)},
+    {label:'Object detection',html:'<p><b>Object detection:</b> finding all the objects in an image.</p>'+fig('248/768/original/Screenshot_2026-10-23_110623.png?1792733792','Example of object detection','',520)},
+    {label:'Text extraction',html:'<p><b>Text extraction:</b> reading the text that appears in an image.</p>'+fig('248/769/original/Screenshot_2026-10-23_110658.png?1792733828','Example of text extraction from an image','',340)},
+    {label:'Captioning',html:'<p><b>Image captioning:</b> writing a one-line description of the image.</p>'+fig('248/770/original/Screenshot_2026-10-23_110741.png?1792733873','Example of image captioning','',520)},
+    {label:'Generation',html:'<p><b>Image generation:</b> producing new images.</p>'+fig('248/771/original/Screenshot_2026-10-23_110822.png?1792733914','Example of generated images','',520)}
+  ],
+  challenges:[
+    {label:'Occlusion',html:'<p><b>Occlusion:</b> part of the object is hidden behind something else.</p>'+fig('249/196/original/Screenshot_2026-10-27_122351.png?1793084048','Examples of occlusion','',520)},
+    {label:'Illumination',html:'<p><b>Illumination variability:</b> the same scene looks different under different lighting.</p>'+fig('249/197/original/Screenshot_2026-10-27_122435.png?1793084091','Examples of illumination variability','',520)},
+    {label:'Pose',html:'<p><b>Pose variability:</b> the same object can appear in many different poses.</p>'+fig('249/199/original/Screenshot_2026-10-27_122539.png?1793084154','Examples of pose variability','',520)}
+  ],
+  results:[
+    {label:'Confusion matrix · NN',html:fig('249/232/original/Screenshot_2026-10-27_123914.png?1793084967','Confusion matrix of the vanilla NN on the test set','Vanilla NN: confusion matrix on the test set (42.74% accuracy)',560)},
+    {label:'Confusion matrix · CNN',html:fig('249/235/original/Screenshot_2026-10-27_124146.png?1793085119','Confusion matrix of the CNN on the test set','CNN: confusion matrix on the test set (51.08% accuracy)',560)},
+    {label:'Samples · NN',html:fig('249/233/original/Screenshot_2026-10-27_124018.png?1793085030','Sample test images with the vanilla NN predicted probabilities','Vanilla NN: sample test predictions with class probabilities',620)},
+    {label:'Samples · CNN',html:fig('249/237/original/Screenshot_2026-10-27_124249.png?1793085182','Sample test images with the CNN predicted probabilities','CNN: sample test predictions with class probabilities',620)}
+  ],
+  problems:[
+    {label:'a · Shifted objects',html:
+      '<p>An MLP flattens the image into a single feature vector, so it has <b>no built-in robustness to shifts</b> of an object (no translation equivariance or invariance). It also ignores neighbouring pixels and, most importantly, the image channels (R-G-B).</p>'+
+      '<p>Take two images of the same dog at different positions: upper left in one, middle right in the other. After flattening, the neurons that were most active for the first image may be dormant for the second, so the MLP can believe the two images contain completely different objects.</p>'+
+      '<div class="widget" data-w="shift"></div>'},
+    {label:'b · No spatial relations',html:
+      '<p>Spatial information is lost when the image is flattened: a person standing to the right of a car, or a red car on the left of a blue bike. Flattening also throws away the internal 2D structure of the image.</p>'},
+    {label:'c · Too many parameters',html:
+      '<p>An MLP is fully connected, so it needs a neuron input for every pixel. Take a 1280 × 720 image. Even in grayscale that is 921,600 inputs; in RGB it is 1280 × 720 × 3 = <b>2,764,800</b> inputs. A dense layer of 128 units then needs 2,764,800 × 128 ≈ <b>354 million weights</b> (about 118 million for grayscale).</p>'+
+      '<p>That makes an MLP infeasible for large images and prone to overfitting. Do we even need global connectivity? The dense connectivity adds redundant parameters, which is what makes the MLP overfit.</p>'+
+      '<div class="widget" data-w="calc" data-arg="dense"></div>'}
+  ]
+};
+
+/* ---------- quizzes ---------- */
+const QUIZ={
+  q1:{q:'A ___ is a preprocessing step which rescales input values to a new range.',c:['Batch Normalization','Residual Layer','Rescaling','Flatten'],a:2,
+    e:'Rescaling. Before feeding a network, we often rescale pixel values to lie between 0 and 1 (in PyTorch, <code>transforms.ToTensor()</code> divides by 255). Rescaling maps every input to <code>value × scale + offset</code> with fixed constants (here scale = 1/255, offset = 0). Batch Normalization, by contrast, uses statistics computed from the data/batch and is a layer inside the network.'},
+  q2:{q:'Which of the following statements is False with regards to MLP for image data as input?',c:['MLPs don\'t consider spatial relations in an image','MLPs usually have fewer parameters than CNNs because they are fully connected.','CNNs are preferred over MLPs for image data','None of the above'],a:1,
+    e:'In an MLP every node is connected to every node in the previous and next layers, which gives it a very high number of parameters, so the second statement is false.'},
+  q3:{q:'An input image has a matrix of size 12 × 12. A filter of size 3 × 3 with a stride of 1 and no padding is applied. What is the size of the output matrix?',c:['10 × 10','12 × 12','9 × 9','10 × 12'],a:0,
+    e:'Use <code>o = ((n − f + 2p)/s) + 1</code> with n = 12, f = 3, p = 0, s = 1: ((12 − 3 + 0)/1) + 1 = 10, so the output is 10 × 10.'}
+};
+function wQuiz(root,key){
+  const d=QUIZ[key],name='q'+(++uid);
+  root.classList.add('widget');
+  root.innerHTML='<span class="wtag">Check your understanding</span><fieldset><legend>'+d.q+'</legend>'+d.c.map((c,i)=>'<label class="opt"><input type="radio" name="'+name+'" value="'+i+'"><span>'+c+'</span><span class="mk"></span></label>').join('')+'</fieldset><div class="qa"><button type="button" class="btn" disabled>Check answer</button><button type="button" class="btn ghost" hidden>Try again</button></div><div class="readout" aria-live="polite" hidden></div>';
+  const [chk,again]=$$('.btn',root),out=$('.readout',root),opts=$$('.opt',root),radios=$$('input',root);
+  radios.forEach(r=>r.addEventListener('change',()=>{chk.disabled=false;}));
+  chk.addEventListener('click',()=>{
+    const v=radios.findIndex(r=>r.checked);if(v<0)return;
+    opts.forEach((o,i)=>{o.classList.remove('ok','bad');$('.mk',o).textContent='';if(i===d.a){o.classList.add('ok');$('.mk',o).textContent='✓ Correct answer';}else if(i===v){o.classList.add('bad');$('.mk',o).textContent='✗ Your choice';}});
+    out.hidden=false;out.innerHTML='<b>'+(v===d.a?'Correct.':'Not quite.')+'</b> '+d.e;
+    chk.hidden=true;again.hidden=false;radios.forEach(r=>r.disabled=true);
+  });
+  again.addEventListener('click',()=>{
+    opts.forEach(o=>{o.classList.remove('ok','bad');$('.mk',o).textContent='';});
+    radios.forEach(r=>{r.checked=false;r.disabled=false;});out.hidden=true;chk.hidden=false;chk.disabled=true;again.hidden=true;
+  });
+}
+function wExit(root){
+  root.classList.add('widget');
+  root.innerHTML='<span class="wtag">Self-check</span><h4 class="wtitle">Output shape and parameters</h4><p>A 32 × 32 × 3 input goes through <code>Conv2d(3, 8, kernel_size=5, stride=1, padding=0)</code>. What is the output shape, and how many parameters does the layer have?</p><button type="button" class="btn" aria-expanded="false">Show answer</button><div class="readout" hidden><b>Output: 28 × 28 × 8.</b> Size = ⌊(32 + 0 − 5)/1⌋ + 1 = 28 per side, with 8 filters.<br><b>Parameters: 608.</b> (5 · 5 · 3 + 1) · 8 = 76 · 8 = 608.</div>';
+  const b=$('button',root),r=$('.readout',root);
+  b.addEventListener('click',()=>{r.hidden=!r.hidden;b.textContent=r.hidden?'Show answer':'Hide answer';b.setAttribute('aria-expanded',String(!r.hidden));});
+}
+
+/* ---------- widget: pixels ---------- */
+function wPixel(root){
+  const b=shell(root,'Pixel explorer','Switch channels, show the raw numbers, and hover or tap a pixel to read its values.');
+  const N=8,px=[];
+  for(let y=0;y<N;y++){const row=[];for(let x=0;x<N;x++){let r=70+x*8,g=60+y*9,bl=190-y*12;const d=Math.hypot(x-3.5,y-3.5);if(d<2.7){r=250;g=Math.round(215-d*12);bl=60;}row.push([r,g,bl]);}px.push(row);}
+  const gray=p=>Math.round(.299*p[0]+.587*p[1]+.114*p[2]);
+  let ch='rgb',nums=false;
+  const ctrl=h('<div class="ctrl"></div>');b.appendChild(ctrl);
+  seg(ctrl,[{label:'Colour (RGB)',value:'rgb'},{label:'Red',value:'r'},{label:'Green',value:'g'},{label:'Blue',value:'b'},{label:'Grayscale',value:'gray'}],ch,v=>{ch=v;draw();},'Channel');
+  const cb=h('<label class="chk"><input type="checkbox"> Show numbers</label>');ctrl.appendChild(cb);
+  $('input',cb).addEventListener('change',e=>{nums=e.target.checked;draw();});
+  const wrap=h('<div class="pxwrap"><div class="mat pxgrid" style="--c:8" role="img" aria-label="An 8 by 8 pixel image"></div><div><div class="readout" aria-live="polite"></div><p class="note">Pixel values run from 0 (dark) to 255 (bright). A grayscale image needs one number per pixel; a colour image needs three (red, green, blue).</p></div></div>');
+  b.appendChild(wrap);
+  const grid=$('.pxgrid',wrap),info=$('.readout',wrap);
+  const val=p=>ch==='r'?p[0]:ch==='g'?p[1]:ch==='b'?p[2]:ch==='gray'?gray(p):null;
+  function show(y,x){const p=px[y][x],v=val(p);info.innerHTML='Pixel at <b>row '+(y+1)+', column '+(x+1)+'</b> → '+(v===null?'R <b>'+p[0]+'</b> · G <b>'+p[1]+'</b> · B <b>'+p[2]+'</b>':'<b>'+v+'</b>');}
+  function draw(){
+    grid.innerHTML=px.map((row,y)=>row.map((p,x)=>{
+      const v=val(p);let bg,col,txt='';
+      if(v===null){bg='rgb('+p+')';col=gray(p)>140?'#1f1637':'#fff';if(nums)txt=p[0]+'<br>'+p[1]+'<br>'+p[2];}
+      else{bg='rgb('+v+','+v+','+v+')';col=v>140?'#1f1637':'#fff';if(nums)txt=v;}
+      return '<div class="cell" data-y="'+y+'" data-x="'+x+'" style="background:'+bg+';color:'+col+'">'+txt+'</div>';}).join('')).join('');
+    const sh=ch==='rgb'?'(8, 8, 3) · as a PyTorch tensor (C, H, W) = (3, 8, 8)':'(8, 8, 1)';
+    grid.setAttribute('aria-label','An 8 by 8 pixel image, shape (H, W, C) = '+sh);
+    if(!info.dataset.init){info.dataset.init=1;info.innerHTML='Shape (H, W, C) = <b>'+sh+'</b>. Hover a pixel.';}
+    else if(info.dataset.y){show(+info.dataset.y,+info.dataset.x);}
+    else info.innerHTML='Shape (H, W, C) = <b>'+sh+'</b>. Hover a pixel.';
+  }
+  function pick(e){const c=e.target.closest('.cell');if(!c)return;info.dataset.y=c.dataset.y;info.dataset.x=c.dataset.x;show(+c.dataset.y,+c.dataset.x);}
+  grid.addEventListener('mouseover',pick);grid.addEventListener('click',pick);
+  draw();
+}
+
+/* ---------- widget: cortex ---------- */
+function wCortex(root){
+  const b=shell(root,'From eyes to objects','Select a stage to compare the visual cortex with a deep network.');
+  const svgs=[
+    '<svg viewBox="0 0 40 40" aria-hidden="true"><g fill="#6d28d9"><circle cx="10" cy="10" r="3"/><circle cx="20" cy="10" r="3"/><circle cx="30" cy="10" r="3"/><circle cx="10" cy="20" r="3"/><circle cx="20" cy="20" r="3"/><circle cx="30" cy="20" r="3"/><circle cx="10" cy="30" r="3"/><circle cx="20" cy="30" r="3"/><circle cx="30" cy="30" r="3"/></g></svg>',
+    '<svg viewBox="0 0 40 40" aria-hidden="true"><g stroke="#8b5cf6" stroke-width="4" stroke-linecap="round"><line x1="6" y1="12" x2="22" y2="12"/><line x1="8" y1="34" x2="8" y2="18"/><line x1="18" y1="34" x2="34" y2="20"/></g></svg>',
+    '<svg viewBox="0 0 40 40" aria-hidden="true"><g fill="none" stroke="#8b5cf6" stroke-width="3"><rect x="4" y="5" width="15" height="15"/><circle cx="29" cy="27" r="8"/><path d="M5 35 L14 22 L20 35 Z"/></g></svg>',
+    '<svg viewBox="0 0 40 40" aria-hidden="true"><g fill="none" stroke="#8b5cf6" stroke-width="3" stroke-linejoin="round"><path d="M5 20 L20 6 L35 20"/><path d="M9 18 V34 H31 V18"/><path d="M17 34 V25 H23 V34"/></g></svg>'];
+  const S=[
+    {t:'Input',bio:'Light enters the eyes.',net:'The raw pixel values enter the network.'},
+    {t:'Early layers',bio:'Early stages respond to simple features, for example edges.',net:'Early layers learn simple features, for example edges.'},
+    {t:'Middle layers',bio:'Later stages combine them into shapes.',net:'Middle layers combine simple features into shapes.'},
+    {t:'Deep layers',bio:'Deeper parts of the brain form higher-order representations, such as whole objects.',net:'Deep layers form higher-order representations, such as whole objects.'}];
+  let sel=1;
+  const g=h('<div class="cortex"></div>');b.appendChild(g);
+  const rd=h('<div class="readout" aria-live="polite"></div>');b.appendChild(rd);
+  function draw(){
+    g.innerHTML='<div class="rl" style="grid-column:1/-1">Select a stage ↓ (the same order in the brain and in a network)</div>'+S.map((s,i)=>'<button type="button" data-i="'+i+'" aria-pressed="'+(i===sel)+'">'+svgs[i]+'<b>'+s.t+'</b>'+(i===0?'Eyes / pixels':i===1?'Simple':i===2?'Shapes':'Objects')+'</button>').join('').replace(/^/,'');
+    g.style.gridTemplateColumns='';
+    rd.innerHTML='<b>Visual cortex:</b> '+S[sel].bio+'<br><b>Deep network:</b> '+S[sel].net;
+  }
+  g.addEventListener('click',e=>{const bt=e.target.closest('button');if(!bt)return;sel=+bt.dataset.i;draw();$('button[data-i="'+sel+'"]',g).focus();});
+  draw();
+}
+
+/* ---------- widget: classes ---------- */
+function wClasses(root){
+  const b=shell(root,'Training images per class','Sort the bars, switch between counts and share, and notice the imbalance.');
+  const data=[['dress',241],['hat',123],['longsleeve',455],['outwear',184],['pants',468],['shirt',290],['shoes',198],['shorts',202],['skirt',112],['t-shirt',795]];
+  const total=data.reduce((a,x)=>a+x[1],0);
+  let sort='name',mode='count';
+  const ctrl=h('<div class="ctrl"></div>');b.appendChild(ctrl);
+  seg(ctrl,[{label:'A–Z',value:'name'},{label:'Largest first',value:'count'}],sort,v=>{sort=v;draw();},'Sort order');
+  seg(ctrl,[{label:'Count',value:'count'},{label:'% of total',value:'share'}],mode,v=>{mode=v;draw();},'Value shown');
+  const list=h('<div class="bars"></div>');b.appendChild(list);
+  b.appendChild(h('<p class="readout">Total: <b>'+fmt(total)+'</b> training images across 10 classes. Largest class: t-shirt (795). Smallest: skirt (112).</p>'));
+  function draw(){
+    const rows=data.slice().sort(sort==='name'?(x,y)=>x[0].localeCompare(y[0]):(x,y)=>y[1]-x[1]).map(r=>({label:r[0],value:r[1],title:r[0]+': '+r[1]+' images ('+(r[1]/total*100).toFixed(1)+'%)'}));
+    barRows(list,rows,795,v=>mode==='count'?fmt(v):(v/total*100).toFixed(1)+'%');
+  }
+  draw();
+}
+
+/* ---------- widget: flatten ---------- */
+function wFlatten(root){
+  const b=shell(root,'Flatten a tiny image','Select a pixel. Its three channel values land in three different places of the flattened vector (PyTorch is channels-first).');
+  const P=[[220,40,60],[240,200,40],[30,160,90],[60,90,220],[250,250,250],[140,60,200],[20,20,20],[200,120,40],[90,200,220]];
+  let sel=4,resc=false;
+  const ctrl=h('<div class="ctrl"><label class="chk"><input type="checkbox"> Rescale values ÷ 255 (as ToTensor does)</label></div>');b.appendChild(ctrl);
+  $('input',ctrl).addEventListener('change',e=>{resc=e.target.checked;draw();});
+  const wrap=h('<div class="flat"><div><div class="pl">3 × 3 image</div><div class="mat" style="--c:3"></div></div><div><div class="pl">Flattened vector (27 values), channel by channel</div><div class="vec"></div></div></div>');b.appendChild(wrap);
+  const grid=$('.mat',wrap),vec=$('.vec',wrap);
+  const ro=h('<div class="readout" aria-live="polite"></div>');b.appendChild(ro);
+  b.appendChild(h('<p class="note">Our real images: 3 × 128 × 128 = <b>49,152</b> values per image after flattening; a batch of 32 becomes 32 × 49,152.</p>'));
+  function draw(){
+    grid.innerHTML=P.map((p,i)=>'<button type="button" class="cell'+(i===sel?' sel':'')+'" data-i="'+i+'" style="background:rgb('+p+');border:2px solid #fff" aria-label="Pixel row '+(Math.floor(i/3)+1)+' column '+(i%3+1)+'" aria-pressed="'+(i===sel)+'"></button>').join('');
+    vec.innerHTML=['R','G','B'].map((c,k)=>'<div class="vrow"><span class="vl">'+c+' block</span><div class="vcells">'+P.map((p,i)=>'<div class="cell'+(i===sel?' on':'')+'">'+(resc?(p[k]/255).toFixed(2):p[k])+'</div>').join('')+'</div></div>').join('');
+    ro.innerHTML='Pixel (row <b>'+(Math.floor(sel/3)+1)+'</b>, col <b>'+(sel%3+1)+'</b>) → vector positions <b>'+sel+'</b> (R), <b>'+(9+sel)+'</b> (G), <b>'+(18+sel)+'</b> (B).';
+  }
+  grid.addEventListener('click',e=>{const c=e.target.closest('.cell');if(!c)return;sel=+c.dataset.i;draw();$('.cell[data-i="'+sel+'"]',grid).focus();});
+  grid.addEventListener('mouseover',e=>{const c=e.target.closest('.cell');if(!c||+c.dataset.i===sel)return;sel=+c.dataset.i;draw();});
+  draw();
+}
+
+/* ---------- widget: softmax / cross-entropy ---------- */
+function wSoftmax(root){
+  const b=shell(root,'Softmax and cross-entropy','Drag the raw scores (logits). Softmax turns them into probabilities; cross-entropy measures how far they are from the true label.');
+  const names=['Dog','Cat','Horse','Cheetah'],z=[2,1,.1,-1];let truth=0;
+  const ctrl=h('<div class="ctrl"><span class="note">True label:</span></div>');b.appendChild(ctrl);
+  seg(ctrl,names.map((n,i)=>({label:n,value:i})),truth,v=>{truth=v;upd();},'True label');
+  const rows=h('<div>'+names.map((n,i)=>'<div class="srow"><span class="bl">'+n+'</span><input type="range" min="-4" max="6" step="0.1" value="'+z[i]+'" data-i="'+i+'" aria-label="'+n+' logit"><span class="zv"></span><span class="bt"><span class="bf"></span></span><span class="bv"></span></div>').join('')+'</div>');
+  b.appendChild(rows);
+  const ro=h('<div class="readout" aria-live="polite"></div>');b.appendChild(ro);
+  function upd(){
+    const m=Math.max(...z),e=z.map(v=>Math.exp(v-m)),s=e.reduce((a,x)=>a+x,0),p=e.map(x=>x/s);
+    $$('.srow',rows).forEach((r,i)=>{$('.zv',r).textContent=z[i].toFixed(1);$('.bf',r).style.width=(p[i]*100)+'%';$('.bv',r).textContent=(p[i]*100).toFixed(1)+'%';$('.bl',r).style.textDecoration=i===truth?'underline':'none';});
+    const L=-Math.log(p[truth]);
+    ro.innerHTML='True class: <b>'+names[truth]+'</b> · probability given to it: <b>'+(p[truth]*100).toFixed(1)+'%</b> · cross-entropy loss = −ln(p) = <b>'+L.toFixed(3)+'</b>. The loss is small when the true class gets a high probability and grows as that probability falls.';
+  }
+  rows.addEventListener('input',e=>{const i=e.target.dataset.i;if(i===undefined)return;z[+i]=+e.target.value;upd();});
+  upd();
+}
+
+/* ---------- widget: model explorer ---------- */
+const MODELS={
+  ann:{name:'Vanilla NN',total:50597642,mb:'202.39',layers:[
+    {n:'Input image',s:'3 × 128 × 128',p:0,d:'A resized, rescaled RGB image.',c:'No parameters.'},
+    {n:'Flatten',s:'49,152',p:0,d:'Turns the 3 × 128 × 128 image into one flat vector of 49,152 values. Spatial structure is gone.',c:'No parameters.'},
+    {n:'Linear 49,152 → 1,024',s:'1,024',p:50332672,d:'Hidden layer 1: every one of the 1,024 neurons connects to every pixel value.',c:'49,152 × 1,024 weights + 1,024 biases = 50,332,672'},
+    {n:'ReLU',s:'1,024',p:0,d:'Non-linear activation.',c:'No parameters.'},
+    {n:'Linear 1,024 → 256',s:'256',p:262400,d:'Hidden layer 2.',c:'1,024 × 256 + 256 = 262,400'},
+    {n:'ReLU',s:'256',p:0,d:'Non-linear activation.',c:'No parameters.'},
+    {n:'Linear 256 → 10',s:'10',p:2570,d:'Output layer: one raw logit per class. No softmax here; CrossEntropyLoss applies log-softmax internally.',c:'256 × 10 + 10 = 2,570'}]},
+  cnn:{name:'CNN',total:16780490,mb:'67.12',layers:[
+    {n:'Input image',s:'3 × 128 × 128',p:0,d:'A resized, rescaled RGB image. No flattening beforehand.',c:'No parameters.'},
+    {n:'Conv2d 3 → 16, 3×3',s:'16 × 128 × 128',p:448,d:'16 learnable 3 × 3 × 3 filters slide over the image (stride 1, padding 1 keeps 128 × 128).',c:'((3 × 3 × 3) + 1) × 16 = 448'},
+    {n:'ReLU',s:'16 × 128 × 128',p:0,d:'Non-linear activation.',c:'No parameters.'},
+    {n:'MaxPool2d 2',s:'16 × 64 × 64',p:0,d:'Keeps the maximum of each 2 × 2 window: height and width are halved. Pooling has no learnable parameters.',c:'o = ⌊(128 − 2)/2 + 1⌋ = 64'},
+    {n:'Flatten',s:'65,536',p:0,d:'16 × 64 × 64 = 65,536 values become one vector for the dense layers.',c:'No parameters.'},
+    {n:'Linear 65,536 → 256',s:'256',p:16777472,d:'Dense hidden layer.',c:'65,536 × 256 + 256 = 16,777,472'},
+    {n:'ReLU',s:'256',p:0,d:'Non-linear activation.',c:'No parameters.'},
+    {n:'Linear 256 → 10',s:'10',p:2570,d:'Output layer: raw logits.',c:'256 × 10 + 10 = 2,570'}]}
+};
+function wModel(root,arg){
+  const b=shell(root,'Layer-by-layer model explorer','Select a layer to see its output shape and how its parameters are counted. Shapes are per image (the batch dimension of 32 is omitted).');
+  let key=arg,sel=1;
+  const ctrl=h('<div class="ctrl"></div>');b.appendChild(ctrl);
+  seg(ctrl,[{label:'Vanilla NN',value:'ann'},{label:'CNN',value:'cnn'}],key,v=>{key=v;sel=1;draw();},'Model');
+  const mx=h('<div class="mx"><ul class="layers"></ul><div class="ldetail" aria-live="polite"></div></div>');b.appendChild(mx);
+  const ul=$('.layers',mx),dt=$('.ldetail',mx);
+  function draw(){
+    const m=MODELS[key],mxp=Math.max(...m.layers.map(l=>l.p));
+    ul.innerHTML=m.layers.map((l,i)=>'<li><button type="button" class="lay" data-i="'+i+'" aria-pressed="'+(i===sel)+'"><span class="ln">'+l.n+'</span><span class="ls">'+l.s+'</span><span class="lp">'+(l.p?fmt(l.p):'—')+'</span><span class="lb"><i style="width:'+(l.p/mxp*100)+'%"></i></span></button></li>').join('');
+    const l=m.layers[sel];
+    dt.innerHTML='<h4>'+l.n+'</h4><p>'+l.d+'</p><p>Output shape: <code>'+l.s+'</code></p><p>Parameters: <code>'+(l.p?fmt(l.p):'0')+'</code></p><p>'+l.c+'</p><p style="border-top:1px solid rgba(255,255,255,.2);padding-top:8px;margin-top:10px">Total for the '+m.name+': <b>'+fmt(m.total)+'</b> parameters (≈ '+m.mb+' MB).</p>';
+  }
+  ul.addEventListener('click',e=>{const bt=e.target.closest('.lay');if(!bt)return;sel=+bt.dataset.i;draw();$('.lay[data-i="'+sel+'"]',ul).focus();});
+  draw();
+}
+
+/* ---------- widget: training curves ---------- */
+const TR={
+  ann:{acc:[.2771,.3999,.4319,.4658,.5098,.5127,.5378,.5473,.5505,.5652],vacc:[.3314,.3695,.3695,.4047,.4721,.4956,.4575,.4663,.5073,.4868],
+       loss:[3.3634,1.8090,1.7050,1.6065,1.4866,1.4620,1.3839,1.3534,1.3253,1.2849],vloss:[1.9590,1.8095,1.7559,1.6527,1.6069,1.5174,1.5797,1.6703,1.4829,1.5360]},
+  cnn:{acc:[.3266,.5085,.5779,.6600,.7379,.8276,.8934,.9390,.9671,.9850],vacc:[.3959,.5073,.5308,.5455,.5748,.6305,.5513,.5894,.6246,.6100],
+       loss:[2.4858,1.5170,1.2846,1.0770,.8346,.5981,.4104,.2671,.1591,.1001],vloss:[1.7576,1.5158,1.4750,1.4161,1.3575,1.2425,1.4233,1.4390,1.3930,1.5213]}
+};
+function wCurves(root,arg){
+  const b=shell(root,'Training curves','Hover (or use ← → on the chart) to read each epoch. Compare train vs validation, or both models on validation.');
+  let mode=arg,metric='acc',idx=9;
+  const ctrl=h('<div class="ctrl"></div>');b.appendChild(ctrl);
+  seg(ctrl,[{label:'Vanilla NN',value:'ann'},{label:'CNN',value:'cnn'},{label:'Compare validation',value:'cmp'}],mode,v=>{mode=v;draw();},'Model');
+  seg(ctrl,[{label:'Accuracy',value:'acc'},{label:'Loss',value:'loss'}],metric,v=>{metric=v;draw();},'Metric');
+  const lg=h('<div class="legend"></div>');b.appendChild(lg);
+  const plot=h('<div class="plot" tabindex="0" role="group" aria-label="Line chart of training and validation curves. Use left and right arrow keys to change epoch."></div>');b.appendChild(plot);
+  const ro=h('<div class="readout" aria-live="polite"></div>');b.appendChild(ro);
+  const dt=h('<details class="code"><summary>View the data as a table</summary><div class="tw"></div></details>');b.appendChild(dt);
+  const W=640,H=330,M={l:52,r:18,t:14,b:42},iw=W-M.l-M.r,ih=H-M.t-M.b;
+  function series(){
+    const A=TR.ann,C=TR.cnn,pc=metric==='acc'?100:1;
+    const g=(o,k)=>o[k].map(v=>v*pc);
+    if(mode==='ann')return [{n:'Train',v:g(A,metric),c:'#2e1065',d:'',m:'c'},{n:'Validation',v:g(A,'v'+metric),c:'#8b5cf6',d:'7 5',m:'s'}];
+    if(mode==='cnn')return [{n:'Train',v:g(C,metric),c:'#2e1065',d:'',m:'c'},{n:'Validation',v:g(C,'v'+metric),c:'#8b5cf6',d:'7 5',m:'s'}];
+    return [{n:'CNN validation',v:g(C,'v'+metric),c:'#2e1065',d:'',m:'c'},{n:'Vanilla NN validation',v:g(A,'v'+metric),c:'#8b5cf6',d:'7 5',m:'s'}];
+  }
+  function draw(){
+    const S=series(),isAcc=metric==='acc',lo=0,hi=isAcc?100:3.5,step=isAcc?20:.5,u=isAcc?'%':'';
+    const X=i=>M.l+i/9*iw,Y=v=>M.t+ih-(v-lo)/(hi-lo)*ih;
+    let s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+(isAcc?'Accuracy':'Loss')+' by epoch">';
+    for(let t=lo;t<=hi+1e-9;t+=step){s+='<line x1="'+M.l+'" x2="'+(W-M.r)+'" y1="'+Y(t)+'" y2="'+Y(t)+'" stroke="#e4dcfa"/><text x="'+(M.l-8)+'" y="'+(Y(t)+4)+'" text-anchor="end" font-size="11" fill="#5a4f78">'+(isAcc?t:t.toFixed(1))+u+'</text>';}
+    for(let i=0;i<10;i++)s+='<text x="'+X(i)+'" y="'+(H-M.b+18)+'" text-anchor="middle" font-size="11" fill="#5a4f78">'+(i+1)+'</text>';
+    s+='<text x="'+(M.l+iw/2)+'" y="'+(H-6)+'" text-anchor="middle" font-size="12" fill="#2e1065" font-weight="700">Epoch</text>';
+    s+='<line x1="'+X(idx)+'" x2="'+X(idx)+'" y1="'+M.t+'" y2="'+(M.t+ih)+'" stroke="#a78bfa" stroke-width="2"/>';
+    S.forEach(se=>{
+      s+='<path d="'+se.v.map((v,i)=>(i?'L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1)).join(' ')+'" fill="none" stroke="'+se.c+'" stroke-width="2.6"'+(se.d?' stroke-dasharray="'+se.d+'"':'')+'/>';
+      se.v.forEach((v,i)=>{const r=i===idx?6:3.5,x=X(i),y=Y(v);s+=se.m==='c'?'<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="'+se.c+'"/>':'<rect x="'+(x-r)+'" y="'+(y-r)+'" width="'+2*r+'" height="'+2*r+'" fill="#fff" stroke="'+se.c+'" stroke-width="2.2"/>';});
+    });
+    plot.innerHTML=s+'</svg>';
+    lg.innerHTML=S.map(se=>'<span><i style="border-color:'+se.c+';'+(se.d?'border-top-style:dashed':'')+'"></i>'+se.n+'</span>').join('');
+    const f=v=>isAcc?v.toFixed(1)+'%':v.toFixed(3);
+    ro.innerHTML='<b>Epoch '+(idx+1)+'</b> — '+S.map(se=>se.n+': <b>'+f(se.v[idx])+'</b>').join(' · ');
+    dt.lastElementChild.innerHTML='<table><thead><tr><th>Epoch</th>'+S.map(se=>'<th class="n">'+se.n+' ('+(isAcc?'accuracy %':'loss')+')</th>').join('')+'</tr></thead><tbody>'+S[0].v.map((_,i)=>'<tr><td>'+(i+1)+'</td>'+S.map(se=>'<td class="n">'+f(se.v[i])+'</td>').join('')+'</tr>').join('')+'</tbody></table>';
+  }
+  function at(e){const r=plot.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*W;const i=Math.round((x-M.l)/iw*9);idx=Math.max(0,Math.min(9,i));draw();}
+  plot.addEventListener('pointermove',at);plot.addEventListener('pointerdown',at);
+  plot.addEventListener('keydown',e=>{if(e.key==='ArrowRight'){idx=Math.min(9,idx+1);draw();e.preventDefault();}else if(e.key==='ArrowLeft'){idx=Math.max(0,idx-1);draw();e.preventDefault();}});
+  draw();
+}
+
+/* ---------- headline + report ---------- */
+function wHeadline(root){
+  root.innerHTML=
+    '<div class="stat"><div class="k">Test accuracy</div><div class="vs"><div><small>Vanilla NN</small><b>42.74%</b></div><div class="win"><small>CNN</small><b>51.08%</b></div></div><div class="s">Same data, loss, optimizer, 10 epochs.</div></div>'+
+    '<div class="stat"><div class="k">Parameters</div><div class="vs"><div><small>Vanilla NN</small><b>50.6M</b></div><div class="win"><small>CNN</small><b>16.8M</b></div></div><div class="s">50,597,642 vs 16,780,490.</div></div>'+
+    '<div class="stat"><div class="k">Final epoch · validation accuracy</div><div class="vs"><div><small>Vanilla NN</small><b>48.7%</b></div><div class="win"><small>CNN</small><b>61.0%</b></div></div><div class="s">Training accuracy: 56.5% vs 98.5%.</div></div>';
+}
+function wReport(root){
+  const b=shell(root,'CNN classification report (test set)','Pick a metric. Classes are listed with their number of test images.');
+  const D=[['dress',.41,.73,.52,15],['hat',0,0,0,12],['longsleeve',.51,.75,.61,72],['outwear',.58,.29,.39,38],['pants',.87,.93,.90,42],['shirt',.36,.19,.25,26],['shoes',.50,.05,.10,73],['shorts',.35,.63,.45,30],['skirt',.18,.25,.21,12],['t-shirt',.54,.85,.66,52]];
+  let m=1,sort='name';
+  const ctrl=h('<div class="ctrl"></div>');b.appendChild(ctrl);
+  seg(ctrl,[{label:'Precision',value:1},{label:'Recall',value:2},{label:'F1-score',value:3}],m,v=>{m=v;draw();},'Metric');
+  seg(ctrl,[{label:'A–Z',value:'name'},{label:'Best first',value:'best'}],sort,v=>{sort=v;draw();},'Sort');
+  const list=h('<div class="bars"></div>');b.appendChild(list);
+  b.appendChild(h('<div class="tw"><table><thead><tr><th></th><th class="n">Precision</th><th class="n">Recall</th><th class="n">F1</th><th class="n">Support</th></tr></thead><tbody><tr><td>Accuracy</td><td class="n"></td><td class="n"></td><td class="n">0.51</td><td class="n">372</td></tr><tr><td>Macro avg</td><td class="n">0.43</td><td class="n">0.47</td><td class="n">0.41</td><td class="n">372</td></tr><tr><td>Weighted avg</td><td class="n">0.51</td><td class="n">0.51</td><td class="n">0.45</td><td class="n">372</td></tr></tbody></table></div>'));
+  b.appendChild(h('<p class="note">Pants are recognised well (F1 0.90). Hats are never predicted correctly (0.00), and shoes have very low recall (0.05) despite being the largest test class after longsleeve and t-shirt.</p>'));
+  function draw(){
+    const rows=D.slice().sort(sort==='name'?(x,y)=>x[0].localeCompare(y[0]):(x,y)=>y[m]-x[m]).map(r=>({label:r[0]+' <span class="note">(n='+r[4]+')</span>',value:r[m],title:r[0]}));
+    barRows(list,rows,1,v=>v.toFixed(2));
+  }
+  draw();
+}
+
+/* ---------- widget: shift ---------- */
+function wShift(root){
+  const b=shell(root,'Move the object: MLP view vs convolution view','Shift a small plus-shaped object. Flattened pixel positions change completely; a convolution detecting the shape responds with the same value at the shifted location.');
+  const N=8,PL=[[0,1],[1,0],[1,1],[1,2],[2,1]],REF={x:1,y:1};let pos={x:1,y:1},view='mlp';
+  const ctrl=h('<div class="ctrl"></div>');b.appendChild(ctrl);
+  seg(ctrl,[{label:'MLP view (flattened)',value:'mlp'},{label:'Convolution view',value:'conv'}],view,v=>{view=v;draw();},'View');
+  const mv=h('<div class="seg" role="group" aria-label="Move the object"><button type="button" data-d="l">← Left</button><button type="button" data-d="u">↑ Up</button><button type="button" data-d="d">↓ Down</button><button type="button" data-d="r">→ Right</button><button type="button" data-d="0">Reset</button></div>');ctrl.appendChild(mv);
+  const duo=h('<div class="duo"><div><div class="pl">8 × 8 image</div><div class="mat im" style="--c:8"></div></div><div class="right"></div></div>');b.appendChild(duo);
+  const im=$('.im',duo),rt=$('.right',duo);
+  const ro=h('<div class="readout" aria-live="polite"></div>');b.appendChild(ro);
+  const cells=(p)=>{const s=new Set();PL.forEach(([r,c])=>s.add((p.y+r)*N+p.x+c));return s;};
+  function draw(){
+    const A=cells(pos),R=cells(REF);
+    im.innerHTML=Array.from({length:64},(_,i)=>'<div class="cell'+(A.has(i)?' on':'')+'"></div>').join('');
+    if(view==='mlp'){
+      let shared=0;A.forEach(i=>{if(R.has(i))shared++;});
+      rt.innerHTML='<div class="pl">Flattened input: 64 numbers (filled = active, dashed = active in the starting image)</div><div class="mat" style="--c:16">'+Array.from({length:64},(_,i)=>'<div class="cell'+(A.has(i)?' on':R.has(i)?' ghost':'')+'" style="font-size:.5rem">'+i+'</div>').join('')+'</div>';
+      ro.innerHTML='Active positions now: <b>'+Array.from(A).sort((a,c)=>a-c).join(', ')+'</b>. Shared with the starting image: <b>'+shared+' of 5</b>. The neurons that fired before may sit idle now, so the MLP can see a different object.';
+    }else{
+      const out=[];let peak=0,pr=0,pc=0;
+      for(let r=0;r<6;r++){out.push([]);for(let c=0;c<6;c++){let s=0;PL.forEach(([kr,kc])=>{if(A.has((r+kr)*N+c+kc))s++;});out[r].push(s);if(s>peak){peak=s;pr=r;pc=c;}}}
+      const mx=5;
+      rt.innerHTML='<div class="pl">Output of a 3 × 3 plus-shaped kernel (counts matching pixels)</div><div class="mat" style="--c:6">'+out.map((row,r)=>row.map((v,c)=>'<div class="cell'+(r===pr&&c===pc?' cur':'')+'" style="background:'+mix(v/mx)+';color:'+ink(v/mx)+'">'+v+'</div>').join('')).join('')+'</div>';
+      ro.innerHTML='Peak response <b>'+peak+'</b> at output row <b>'+(pr+1)+'</b>, column <b>'+(pc+1)+'</b>. Move the object and the same peak value moves with it: convolution is translation <b>equivariant</b>.';
+    }
+  }
+  mv.addEventListener('click',e=>{const d=e.target.dataset.d;if(!d)return;
+    if(d==='l')pos.x=Math.max(0,pos.x-1);if(d==='r')pos.x=Math.min(N-3,pos.x+1);if(d==='u')pos.y=Math.max(0,pos.y-1);if(d==='d')pos.y=Math.min(N-3,pos.y+1);if(d==='0')pos={x:1,y:1};draw();});
+  draw();
+}
+
+/* ---------- widget: parameter calculator ---------- */
+function wCalc(root,mode){
+  const dense=mode==='dense';
+  const b=shell(root,dense?'How many weights does a dense layer need?':'Layer calculator: dense layer vs convolution layer',dense?'Change the image size and watch the first dense layer grow.':'Change the image size: the dense layer scales with the number of pixels, the convolution layer does not. Output size uses o = ⌊(n + 2p − f)/s⌋ + 1.');
+  const F=[['H','Height',128],['W','Width',128],['C','Channels',3],['U','Dense units',1024],['K','Filters (conv)',16],['F','Kernel size',3],['S','Stride',1],['P','Padding',1]];
+  const show=dense?['H','W','C','U']:F.map(f=>f[0]);
+  const ctrl=h('<div class="ctrl"></div>');b.appendChild(ctrl);
+  const pre=dense?[['1280 × 720 RGB, 128 units',{H:720,W:1280,C:3,U:128}],['Our clothing images, 1,024 units',{H:128,W:128,C:3,U:1024}]]:
+    [['Our CNN: conv1 vs fc1',{H:128,W:128,C:3,U:1024,K:16,F:3,S:1,P:1}],['1280 × 720 RGB',{H:720,W:1280,C:3,U:128,K:16,F:3,S:1,P:1}],['Quiz 3: 12 × 12, 3 × 3',{H:12,W:12,C:1,U:128,K:1,F:3,S:1,P:0}],['Self-check layer',{H:32,W:32,C:3,U:128,K:8,F:5,S:1,P:0}]];
+  const pr=h('<div class="seg" role="group" aria-label="Presets"></div>');
+  pre.forEach(([l,v])=>{const bt=h('<button type="button" aria-pressed="false">'+l+'</button>');bt.addEventListener('click',()=>{Object.keys(v).forEach(k=>{inp[k].value=v[k];});upd();});pr.appendChild(bt);});
+  const inp={};
+  const flds=h('<div class="ctrl"></div>');
+  F.forEach(([k,l,d])=>{if(!show.includes(k))return;
+    let el;
+    if(k==='C'){el=h('<select><option value="1">1 (grayscale)</option><option value="3" selected>3 (RGB)</option></select>');}
+    else el=h('<input type="number" min="1" max="4096" value="'+d+'">');
+    inp[k]=el;const lab=h('<label class="fld">'+l+'</label>');lab.appendChild(el);flds.appendChild(lab);el.addEventListener('input',upd);el.addEventListener('change',upd);});
+  ctrl.appendChild(pr);b.appendChild(flds);
+  const res=h('<div class="duo"></div>');b.appendChild(res);
+  const svg=h('<div></div>');if(!dense)b.appendChild(svg);
+  function vol(x,y,w,hh,d,lab,sub){let s='';for(let i=d-1;i>=0;i--)s+='<rect x="'+(x+i*7)+'" y="'+(y-i*7)+'" width="'+w+'" height="'+hh+'" rx="4" fill="'+(i===0?'#ede9fe':'#ddd6fe')+'" stroke="#6d28d9" stroke-width="1.6"/>';return s+'<text x="'+(x+w/2)+'" y="'+(y+hh+22)+'" text-anchor="middle" font-size="12" font-weight="700" fill="#2e1065">'+lab+'</text><text x="'+(x+w/2)+'" y="'+(y+hh+38)+'" text-anchor="middle" font-size="11" fill="#5a4f78">'+sub+'</text>';}
+  function upd(){
+    const g=k=>Math.max(1,parseInt(inp[k]&&inp[k].value,10)||1);
+    const Hh=g('H'),Ww=g('W'),C=parseInt(inp.C.value,10)||1,U=g('U');
+    const nin=Hh*Ww*C,dw=nin*U,dp=dw+U;
+    let html='<div class="card"><h4>Dense layer</h4><p>Flattened inputs: <b>'+fmt(nin)+'</b> (H × W × C)</p><p>Weights: '+fmt(nin)+' × '+fmt(U)+' = <b>'+fmt(dw)+'</b></p><p>Parameters incl. '+fmt(U)+' biases: <b>'+fmt(dp)+'</b></p></div>';
+    if(!dense){
+      const K=g('K'),f=g('F'),s=g('S'),p=parseInt(inp.P.value,10)||0;
+      const ok=f<=Hh+2*p&&f<=Ww+2*p,oh=Math.floor((Hh+2*p-f)/s)+1,ow=Math.floor((Ww+2*p-f)/s)+1,cp=((f*f*C)+1)*K;
+      html+='<div class="card dark"><h4>Convolution layer</h4>'+(ok?'<p>Output shape: <b>'+oh+' × '+ow+' × '+K+'</b></p><p>Parameters: ((' +f+' × '+f+' × '+C+') + 1) × '+K+' = <b>'+fmt(cp)+'</b></p><p>The dense layer has <b>'+fmt(Math.round(dp/cp))+'×</b> more parameters.</p>':'<p>The kernel is larger than the padded input: no valid output.</p>')+'</div>';
+      svg.innerHTML=ok?'<svg viewBox="0 0 600 150" role="img" aria-label="Input volume, filters, output volume" style="width:100%;height:auto;margin-top:10px">'+vol(20,40,86,70,C>1?3:1,Hh+' × '+Ww+' × '+C,'input')+'<text x="150" y="80" text-anchor="middle" font-size="22" fill="#6d28d9">⊛</text>'+vol(200,52,38,38,K>1?3:1,f+' × '+f+' × '+C,K+' filter'+(K>1?'s':''))+'<text x="320" y="80" text-anchor="middle" font-size="22" fill="#6d28d9">→</text>'+vol(380,40,86,70,K>1?3:1,oh+' × '+ow+' × '+K,'output')+'</svg>':'';
+    }
+    res.innerHTML=html;
+  }
+  upd();
+}
+
+/* ---------- widget: local connectivity ---------- */
+function wLocal(root){
+  const b=shell(root,'From dense to convolutional connections','Five inputs feed five hidden units. Switch the wiring and watch the counts. Click a hidden unit to isolate its inputs.');
+  let mode='full',focus=null;
+  const ctrl=h('<div class="ctrl"></div>');b.appendChild(ctrl);
+  seg(ctrl,[{label:'Fully connected',value:'full'},{label:'Sparse (locality)',value:'local'},{label:'Sparse + shared weights',value:'share'}],mode,v=>{mode=v;draw();},'Wiring');
+  const box=h('<div></div>');b.appendChild(box);
+  const ro=h('<div class="readout" aria-live="polite"></div>');b.appendChild(ro);
+  const Y=i=>34+i*48,XI=80,XH=440;
+  const DS=['','7 5','2 5'],CL=['#2e1065','#7c3aed','#8b5cf6'];
+  function draw(){
+    let lines='',cnt=0;
+    for(let j=0;j<5;j++)for(let i=0;i<5;i++){
+      const d=i-j;if(mode!=='full'&&Math.abs(d)>1)continue;cnt++;
+      let st='#8b5cf6',da='',w=1.3,op=.5;
+      if(mode==='local'){st='#6d28d9';w=2;op=.8;}
+      if(mode==='share'){st=CL[d+1];da=DS[d+1];w=2.8;op=1;}
+      if(focus!==null&&j!==focus)op=.08;
+      lines+='<line x1="'+XI+'" y1="'+Y(i)+'" x2="'+XH+'" y2="'+Y(j)+'" stroke="'+st+'" stroke-width="'+w+'" stroke-opacity="'+op+'"'+(da?' stroke-dasharray="'+da+'"':'')+'/>';
+    }
+    let nodes='';
+    for(let i=0;i<5;i++)nodes+='<circle cx="'+XI+'" cy="'+Y(i)+'" r="13" fill="#fff" stroke="#2e1065" stroke-width="2"/><text x="'+XI+'" y="'+(Y(i)+4)+'" text-anchor="middle" font-size="11" font-weight="700" fill="#2e1065">x'+(i+1)+'</text>';
+    for(let j=0;j<5;j++)nodes+='<g tabindex="0" role="button" data-j="'+j+'" aria-label="Hidden unit '+(j+1)+'" aria-pressed="'+(focus===j)+'" style="cursor:pointer"><circle cx="'+XH+'" cy="'+Y(j)+'" r="15" fill="'+(focus===j?'#2e1065':'#6d28d9')+'" stroke="#2e1065" stroke-width="2"/><text x="'+XH+'" y="'+(Y(j)+4)+'" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">h'+(j+1)+'</text></g>';
+    box.innerHTML='<svg viewBox="0 0 520 262" role="img" aria-label="Wiring diagram between 5 inputs and 5 hidden units" style="width:100%;max-width:560px;height:auto;display:block;margin:0 auto"><text x="'+XI+'" y="14" text-anchor="middle" font-size="11" fill="#5a4f78">inputs</text><text x="'+XH+'" y="14" text-anchor="middle" font-size="11" fill="#5a4f78">hidden</text>'+lines+nodes+'</svg>';
+    const wts=mode==='share'?3:cnt;
+    const msg={full:'Every hidden unit sees all 5 inputs; far-away inputs count as much as near ones.',local:'Far-away connections are dropped: each hidden unit now sees a neighbourhood of at most 3 inputs instead of 5 (its receptive field).',share:'The same three weights (w1 solid, w2 dashed, w3 dotted) are reused at every position. That sliding, shared set of weights is a convolution kernel.'}[mode];
+    ro.innerHTML='Connections: <b>'+cnt+'</b> · Distinct learnable weights: <b>'+wts+'</b>'+(focus!==null?' · Showing inputs of h'+(focus+1):'')+'<br>'+msg;
+  }
+  box.addEventListener('click',e=>{const g=e.target.closest('[data-j]');if(!g)return;const j=+g.dataset.j;focus=focus===j?null:j;draw();});
+  box.addEventListener('keydown',e=>{if(e.key!=='Enter'&&e.key!==' ')return;const g=e.target.closest('[data-j]');if(!g)return;e.preventDefault();const j=+g.dataset.j;focus=focus===j?null:j;draw();const n=$('[data-j="'+j+'"]',box);if(n)n.focus();});
+  draw();
+}
+
+/* ---------- widget: convolution explorer ---------- */
+function wConv(root){
+  const b=shell(root,'Convolution explorer','Choose an image and a kernel, set padding and stride, then step the kernel across. Click input pixels to flip them between bright (10) and dark (0).');
+  const n=6,f=3;
+  const IMG={top:['Bright top, dark bottom',(r,c)=>r<3?10:0],low:['Same edge, one row lower',(r,c)=>r<4?10:0],left:['Bright left, dark right',(r,c)=>c<3?10:0]};
+  const KER={hor:['Horizontal-edge kernel',[[1,1,1],[0,0,0],[-1,-1,-1]]],ver:['Vertical-edge kernel',[[1,0,-1],[1,0,-1],[1,0,-1]]],sob:['Sobel (vertical edges, dx=1)',[[-1,0,1],[-2,0,2],[-1,0,1]]]};
+  let im='top',ker='hor',p=0,s=1,step=0,all=false,last=0,timer=null;
+  let data=mk();
+  function mk(){return Array.from({length:n},(_,r)=>Array.from({length:n},(_,c)=>IMG[im][1](r,c)));}
+  const ctrl=h('<div class="ctrl"></div>');b.appendChild(ctrl);
+  const sI=h('<label class="sel">Image <select>'+Object.keys(IMG).map(k=>'<option value="'+k+'">'+IMG[k][0]+'</option>').join('')+'</select></label>');
+  const sK=h('<label class="sel">Kernel <select>'+Object.keys(KER).map(k=>'<option value="'+k+'">'+KER[k][0]+'</option>').join('')+'</select></label>');
+  ctrl.append(sI,sK);
+  const lp=h('<span class="note">Padding</span>');ctrl.appendChild(lp);
+  seg(ctrl,[{label:'0',value:0},{label:'1',value:1}],p,v=>{p=v;step=0;stop();render();},'Padding');
+  ctrl.appendChild(h('<span class="note">Stride</span>'));
+  seg(ctrl,[{label:'1',value:1},{label:'2',value:2}],s,v=>{s=v;step=0;stop();render();},'Stride');
+  $('select',sI).addEventListener('change',e=>{im=e.target.value;data=mk();step=0;stop();render();});
+  $('select',sK).addEventListener('change',e=>{ker=e.target.value;render();});
+  const pan=h('<div class="cx"></div>');b.appendChild(pan);
+  const bar=h('<div class="stepbar"><button type="button" class="btn ghost sm" data-a="prev">◀ Prev</button><input type="range" min="0" max="15" value="0" aria-label="Kernel position"><button type="button" class="btn ghost sm" data-a="next">Next ▶</button><button type="button" class="btn sm" data-a="play">▶ Play</button><button type="button" class="btn ghost sm" data-a="all" aria-pressed="false">Show all outputs</button></div>');b.appendChild(bar);
+  const rng=$('input',bar),playB=$('[data-a=play]',bar),allB=$('[data-a=all]',bar);
+  const ro=h('<div class="readout" aria-live="polite"></div>');b.appendChild(ro);
+  b.appendChild(h('<p class="note">Dashed borders mark negative numbers. Darker violet means a larger magnitude. The input image here is an illustrative 6 × 6 example.</p>'));
+  function stop(){if(timer){clearInterval(timer);timer=null;}playB.textContent='▶ Play';}
+  function render(){
+    const N=n+2*p,K=KER[ker][1];
+    const P=Array.from({length:N},(_,r)=>Array.from({length:N},(_,c)=>{const rr=r-p,cc=c-p;return rr>=0&&rr<n&&cc>=0&&cc<n?data[rr][cc]:0;}));
+    const o=Math.floor((N-f)/s)+1;
+    const out=[];for(let r=0;r<o;r++){out.push([]);for(let c=0;c<o;c++){let t=0;for(let i=0;i<f;i++)for(let j=0;j<f;j++)t+=P[r*s+i][c*s+j]*K[i][j];out[r].push(t);}}
+    last=o*o-1;if(step>last)step=last;
+    const cur=step,wr=Math.floor(cur/o),wc=cur%o,r0=wr*s,c0=wc*s;
+    const maxAbs=Math.max(1,...out.flat().map(Math.abs));
+    let inH='';
+    P.forEach((row,r)=>row.forEach((v,c)=>{
+      const real=r>=p&&r<n+p&&c>=p&&c<n+p,inw=r>=r0&&r<r0+f&&c>=c0&&c<c0+f,tg=real?'button':'div';
+      inH+='<'+tg+(real?' type="button" data-r="'+(r-p)+'" data-c="'+(c-p)+'" aria-label="Pixel row '+(r-p+1)+', column '+(c-p+1)+', value '+v+'. Activate to flip."':'')+' class="cell'+(real?'':' pad')+(inw?' win':'')+'"'+(real?' style="background:'+mix(v/10)+';color:'+ink(v/10)+'"':'')+'>'+v+'</'+tg+'>';
+    }));
+    let kH='',pH='',sum=0;
+    for(let i=0;i<f;i++)for(let j=0;j<f;j++){const k=K[i][j],pv=P[r0+i][c0+j]*k;sum+=pv;kH+='<div class="cell'+(k<0?' neg':'')+'">'+k+'</div>';pH+='<div class="cell'+(pv<0?' neg':'')+'" style="background:'+mix(Math.abs(pv)/30)+';color:'+ink(Math.abs(pv)/30)+'">'+pv+'</div>';}
+    let oH='';
+    out.forEach((row,r)=>row.forEach((v,c)=>{const i=r*o+c,shown=all||i<=cur;oH+='<div class="cell'+(v<0&&shown?' neg':'')+(i===cur?' cur':'')+'" style="'+(shown?'background:'+mix(Math.abs(v)/maxAbs)+';color:'+ink(Math.abs(v)/maxAbs):'')+'">'+(shown?v:'·')+'</div>';}));
+    pan.innerHTML='<div class="pn pn-in"><div class="pl">Input '+N+'×'+N+(p?' (with zero padding)':'')+'</div><div class="mat" style="--c:'+N+'">'+inH+'</div></div>'+
+      '<div class="pn"><div class="pl">Kernel 3×3</div><div class="mat" style="--c:3">'+kH+'</div></div>'+
+      '<div class="pn"><div class="pl">Window × kernel</div><div class="mat" style="--c:3">'+pH+'</div><div class="sum">Σ = <b>'+sum+'</b></div></div>'+
+      '<div class="pn"><div class="pl">Output '+o+'×'+o+'</div><div class="mat" style="--c:'+o+'">'+oH+'</div></div>';
+    rng.max=last;rng.value=cur;
+    ro.innerHTML='Output size: o = ⌊(n + 2p − f)/s⌋ + 1 = ⌊(6 + 2×'+p+' − 3)/'+s+'⌋ + 1 = <b>'+o+'</b>, so the output is <b>'+o+' × '+o+'</b>. Position <b>'+(cur+1)+' of '+(last+1)+'</b>: window top-left at row '+(r0+1)+', column '+(c0+1)+'.';
+  }
+  pan.addEventListener('click',e=>{const t=e.target.closest('[data-r]');if(!t)return;const r=+t.dataset.r,c=+t.dataset.c;data[r][c]=data[r][c]?0:10;render();});
+  rng.addEventListener('input',()=>{stop();step=+rng.value;render();});
+  bar.addEventListener('click',e=>{
+    const a=e.target.dataset.a;if(!a)return;
+    if(a==='prev'){stop();step=Math.max(0,step-1);render();}
+    if(a==='next'){stop();step=Math.min(last,step+1);render();}
+    if(a==='all'){all=!all;allB.setAttribute('aria-pressed',String(all));allB.textContent=all?'Hide unfinished outputs':'Show all outputs';render();}
+    if(a==='play'){
+      if(timer){stop();return;}
+      all=false;allB.setAttribute('aria-pressed','false');allB.textContent='Show all outputs';
+      if(step>=last)step=0;playB.textContent='❚❚ Pause';render();
+      timer=setInterval(()=>{if(step>=last){stop();return;}step++;render();},650);
+    }
+  });
+  render();
+}
+
+/* ---------- widget: coverage ---------- */
+function wCover(root){
+  const b=shell(root,'How many times is each pixel used?','For a 6 × 6 image, a 3 × 3 kernel and stride 1, each cell shows how many kernel positions cover that pixel.');
+  let p=0;const n=6,f=3;
+  const ctrl=h('<div class="ctrl"><span class="note">Padding</span></div>');b.appendChild(ctrl);
+  seg(ctrl,[{label:'0 (none)',value:0},{label:'1',value:1},{label:'2',value:2}],p,v=>{p=v;draw();},'Padding');
+  const g=h('<div class="mat" style="--c:6;max-width:340px"></div>');b.appendChild(g);
+  const ro=h('<div class="readout" aria-live="polite"></div>');b.appendChild(ro);
+  function counts(p){const c=Array.from({length:n},()=>Array(n).fill(0)),N=n+2*p;for(let wr=0;wr<=N-f;wr++)for(let wc=0;wc<=N-f;wc++)for(let i=0;i<f;i++)for(let j=0;j<f;j++){const r=wr+i-p,cc=wc+j-p;if(r>=0&&r<n&&cc>=0&&cc<n)c[r][cc]++;}return c;}
+  function draw(){
+    const c=counts(p);
+    g.innerHTML=c.map(row=>row.map(v=>'<div class="cell" style="background:'+mix(v/9)+';color:'+ink(v/9)+'">'+v+'</div>').join('')).join('');
+    const o=n+2*p-f+1;
+    ro.innerHTML='Output size: <b>'+o+' × '+o+'</b> · Corner pixel used in <b>'+c[0][0]+'</b> window'+(c[0][0]>1?'s':'')+' · edge pixel in <b>'+c[0][2]+'</b> · interior pixel in <b>'+c[2][2]+'</b>.';
+  }
+  draw();
+}
+
+/* ---------- widget: odd kernel ---------- */
+function wOdd(root){
+  const b=shell(root,'Where is the centre of the kernel?','Compare a 3 × 3 kernel with a 2 × 2 kernel.');
+  let k=3;
+  const ctrl=h('<div class="ctrl"></div>');b.appendChild(ctrl);
+  seg(ctrl,[{label:'3 × 3',value:3},{label:'2 × 2',value:2}],k,v=>{k=v;draw();},'Kernel size');
+  const box=h('<div></div>');b.appendChild(box);
+  const ro=h('<div class="readout" aria-live="polite"></div>');b.appendChild(ro);
+  function draw(){
+    const c=64,o=20,cx=o+k*c/2;let s='<svg viewBox="0 0 280 230" role="img" aria-label="A '+k+' by '+k+' kernel with its centre marked" style="width:100%;max-width:300px;height:auto;display:block;margin:0 auto">';
+    for(let r=0;r<k;r++)for(let q=0;q<k;q++){const mid=k===3&&r===1&&q===1;s+='<rect x="'+(o+q*c)+'" y="'+(o+r*c)+'" width="'+c+'" height="'+c+'" fill="'+(mid?'#c4b5fd':'#f5f3ff')+'" stroke="#6d28d9" stroke-width="2"/>';}
+    if(k===3)s+='<circle cx="'+cx+'" cy="'+cx+'" r="7" fill="#2e1065"/>';
+    else s+='<g stroke="#2e1065" stroke-width="4" stroke-linecap="round"><line x1="'+(cx-9)+'" y1="'+(cx-9)+'" x2="'+(cx+9)+'" y2="'+(cx+9)+'"/><line x1="'+(cx+9)+'" y1="'+(cx-9)+'" x2="'+(cx-9)+'" y2="'+(cx+9)+'"/></g>';
+    box.innerHTML=s+'</svg>';
+    ro.innerHTML=k===3?'Centre at <b>(1, 1)</b>, a valid pixel coordinate (origin at the top-left, zero-indexed). The surrounding pixels are symmetric around it.':'Centre at <b>(0.5, 0.5)</b>, which is not a pixel location: pixel coordinates must be integers.';
+  }
+  draw();
+}
+
+/* ---------- widget: pooling ---------- */
+function wPool(root){
+  const b=shell(root,'Pooling a 4 × 4 feature map','A 2 × 2 window with stride 2 gives a 2 × 2 output. Select an output cell to see its window.');
+  const X=[[1,3,2,4],[5,6,7,8],[3,2,1,0],[1,2,3,4]];let mode='max',sel=0;
+  const ctrl=h('<div class="ctrl"></div>');b.appendChild(ctrl);
+  seg(ctrl,[{label:'Max pooling',value:'max'},{label:'Average pooling',value:'avg'}],mode,v=>{mode=v;draw();},'Pooling type');
+  const duo=h('<div class="duo"><div><div class="pl">Input (4 × 4)</div><div class="mat ip" style="--c:4;max-width:300px"></div></div><div><div class="pl">Output (2 × 2)</div><div class="mat op" style="--c:2;max-width:150px"></div></div></div>');b.appendChild(duo);
+  const ip=$('.ip',duo),op=$('.op',duo);
+  const ro=h('<div class="readout" aria-live="polite"></div>');b.appendChild(ro);
+  const win=i=>{const r=Math.floor(i/2)*2,c=(i%2)*2,v=[];for(let a=0;a<2;a++)for(let d=0;d<2;d++)v.push(X[r+a][c+d]);return {r,c,v};};
+  const val=i=>{const v=win(i).v;return mode==='max'?Math.max(...v):v.reduce((a,x)=>a+x,0)/4;};
+  function draw(){
+    const w=win(sel);
+    ip.innerHTML=X.map((row,r)=>row.map((v,c)=>{const inn=r>=w.r&&r<w.r+2&&c>=w.c&&c<w.c+2;return '<div class="cell'+(inn?' win':'')+'" style="'+(inn?'background:'+mix(.45)+';color:#fff':'')+'">'+v+'</div>';}).join('')).join('');
+    op.innerHTML=[0,1,2,3].map(i=>'<button type="button" class="cell'+(i===sel?' sel':'')+'" data-i="'+i+'" aria-label="Output cell '+(i+1)+'" style="background:'+(i===sel?'#2e1065':'#ede9fe')+';color:'+(i===sel?'#fff':'#2e1065')+'">'+(Number.isInteger(val(i))?val(i):val(i).toFixed(2))+'</button>').join('');
+    ro.innerHTML=(mode==='max'?'max('+w.v.join(', ')+') = <b>'+val(sel)+'</b>':'mean('+w.v.join(', ')+') = '+w.v.reduce((a,x)=>a+x,0)+'/4 = <b>'+val(sel)+'</b>')+' · Output size o = ⌊(4 − 2)/2 + 1⌋ = <b>2</b> · Learnable parameters: <b>0</b>.';
+  }
+  op.addEventListener('click',e=>{const c=e.target.closest('[data-i]');if(!c)return;sel=+c.dataset.i;draw();$('[data-i="'+sel+'"]',op).focus();});
+  draw();
+}
+
+/* ---------- contents + progress ---------- */
+function wToc(){
+  const secs=$$('main section[data-title]'),ol=$('#toc ol'),btn=$('#tocBtn'),toc=$('#toc');
+  ol.innerHTML=secs.map((s,i)=>'<li><a href="#'+s.id+'"><b>'+String(i+1).padStart(2,'0')+'</b><span>'+s.dataset.title+'</span></a></li>').join('');
+  function close(){toc.hidden=true;btn.setAttribute('aria-expanded','false');}
+  btn.addEventListener('click',()=>{const o=toc.hidden;toc.hidden=!o;btn.setAttribute('aria-expanded',String(o));});
+  ol.addEventListener('click',e=>{if(e.target.closest('a'))close();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!toc.hidden){close();btn.focus();}});
+  document.addEventListener('click',e=>{if(!toc.hidden&&!e.target.closest('#toc')&&!e.target.closest('#tocBtn'))close();});
+  const links=$$('a',ol);
+  if('IntersectionObserver' in window){
+    const io=new IntersectionObserver(es=>{es.forEach(en=>{if(en.isIntersecting){links.forEach(l=>l.removeAttribute('aria-current'));const l=$('a[href="#'+en.target.id+'"]',ol);if(l)l.setAttribute('aria-current','true');}});},{rootMargin:'-30% 0px -60% 0px'});
+    secs.forEach(s=>io.observe(s));
+  }
+  const bar=$('#bar');
+  function prog(){const d=document.documentElement,t=d.scrollHeight-d.clientHeight;bar.style.width=(t>0?Math.min(100,d.scrollTop/t*100):0)+'%';}
+  window.addEventListener('scroll',prog,{passive:true});prog();
+}
+
+/* ---------- mount ---------- */
+const W={pixel:wPixel,cortex:wCortex,classes:wClasses,flatten:wFlatten,softmax:wSoftmax,model:wModel,curves:wCurves,report:wReport,shift:wShift,calc:wCalc,local:wLocal,conv:wConv,cover:wCover,odd:wOdd,pool:wPool,exit:wExit};
+function init(){
+  $$('[data-fig]').forEach(el=>{el.innerHTML=FIGS[el.dataset.fig]||'';});
+  $$('[data-tabs]').forEach(el=>{const it=TABS[el.dataset.tabs];if(it)mountTabs(el,it);});
+  const hl=$('[data-w=headline]');if(hl)wHeadline(hl);
+  $$('[data-w]').forEach(el=>{
+    const k=el.dataset.w;
+    if(k==='headline')return;
+    if(k==='quiz'){wQuiz(el,el.dataset.q);return;}
+    if(W[k])W[k](el,el.dataset.arg);
+  });
+  wToc();
+}
+init();
+})();
+</script>
+</body>
+</html>
